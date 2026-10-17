@@ -3,6 +3,8 @@
 
 #include <libavcodec/avcodec.h>
 
+#include <stdbool.h>
+
 static enum AVCodecID chiaki_codec_av_codec_id(ChiakiCodec codec)
 {
 	switch(codec)
@@ -165,53 +167,83 @@ hell:
 static AVFrame *pull_from_hw(ChiakiFfmpegDecoder *decoder, AVFrame *hw_frame)
 {
 	AVFrame *sw_frame = av_frame_alloc();
+	if(!sw_frame)
+	{
+		av_frame_unref(hw_frame);
+		return NULL;
+	}
 	if(av_hwframe_transfer_data(sw_frame, hw_frame, 0) < 0)
 	{
 		CHIAKI_LOGE(decoder->log, "Failed to transfer frame from hardware");
-		av_frame_unref(sw_frame);
-		sw_frame = NULL;
+		av_frame_free(&sw_frame);
 	}
 	av_frame_unref(hw_frame);
 	return sw_frame;
 }
 
+/**
+ * Whether FFmpeg flagged the decoded frame as damaged (missing reference, undecodable
+ * slices, error concealment active...). Showing such a frame is what the user sees as
+ * macroblocking, so it is better to keep the previous frame on screen until a clean one
+ * arrives. The console is asked for a new keyframe separately by the video receiver.
+ */
+static bool frame_is_corrupt(AVFrame *frame)
+{
+	if(frame->decode_error_flags)
+		return true;
+#ifdef AV_FRAME_FLAG_CORRUPT
+	if(frame->flags & AV_FRAME_FLAG_CORRUPT)
+		return true;
+#endif
+	return false;
+}
+
 CHIAKI_EXPORT AVFrame *chiaki_ffmpeg_decoder_pull_frame(ChiakiFfmpegDecoder *decoder)
 {
 	chiaki_mutex_lock(&decoder->mutex);
-	// always try to pull as much as possible and return only the very last frame
+
+	// Always drain the decoder and return only the last clean frame.
+	// Returning NULL makes the caller keep whatever is currently on screen.
 	AVFrame *frame_last = NULL;
-	AVFrame *frame = NULL;
-	while(true)
+	AVFrame *frame = av_frame_alloc();
+	while(frame)
 	{
-		AVFrame *next_frame;
-		if(frame_last)
-		{
-			av_frame_unref(frame_last);
-			next_frame = frame_last;
-		}
-		else
-		{
-			next_frame = av_frame_alloc();
-			if(!next_frame)
-				break;
-		}
-		frame_last = frame;
-		frame = next_frame;
 		int r = avcodec_receive_frame(decoder->codec_context, frame);
-		if(!r)
-			frame = decoder->hw_device_ctx ? pull_from_hw(decoder, frame) : frame;
-		else
+		if(r)
 		{
 			if(r != AVERROR(EAGAIN))
 				CHIAKI_LOGE(decoder->log, "Decoding with FFMPEG failed");
-			av_frame_free(&frame);
-			frame = frame_last;
 			break;
 		}
-	}
-	chiaki_mutex_unlock(&decoder->mutex);
 
-	return frame;
+		if(frame_is_corrupt(frame))
+		{
+			CHIAKI_LOGW(decoder->log, "Discarding corrupt frame (decode_error_flags %#x), keeping the previous one",
+					(unsigned int)frame->decode_error_flags);
+			av_frame_unref(frame);
+			continue;
+		}
+
+		if(decoder->hw_device_ctx)
+		{
+			// frame (the hw surface) is unref'd by pull_from_hw and can be reused for the next receive
+			AVFrame *sw_frame = pull_from_hw(decoder, frame);
+			if(!sw_frame)
+				continue;
+			av_frame_free(&frame_last);
+			frame_last = sw_frame;
+		}
+		else
+		{
+			av_frame_free(&frame_last);
+			frame_last = frame;
+			frame = av_frame_alloc();
+		}
+	}
+	av_frame_free(&frame);
+
+	chiaki_mutex_unlock(&decoder->mutex);
+	return frame_last;
 }
 
 CHIAKI_EXPORT enum AVPixelFormat chiaki_ffmpeg_decoder_get_pixel_format(ChiakiFfmpegDecoder *decoder)
