@@ -9,6 +9,7 @@
 
 class QLabel;
 class AVOpenGLWidget;
+class ScreenSaverInhibitor;
 
 class StreamWindow: public QMainWindow
 {
@@ -23,6 +24,7 @@ class StreamWindow: public QMainWindow
 		StreamSession *session;
 
 		AVOpenGLWidget *av_widget;
+		ScreenSaverInhibitor *screensaver_inhibitor;
 
 		void Init();
 		void UpdateVideoTransform();

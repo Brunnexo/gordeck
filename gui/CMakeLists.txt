@@ -9,6 +9,10 @@ endif()
 if(CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER)
 	find_package(SDL2 MODULE REQUIRED)
 endif()
+if(UNIX AND NOT APPLE)
+	# used to keep the screen on during streams
+	find_package(Qt5 REQUIRED COMPONENTS DBus)
+endif()
 
 if(WIN32)
 	add_definitions(-DWIN32_LEAN_AND_MEAN)
@@ -54,6 +58,8 @@ add_executable(gordeck WIN32
 		src/gamepadnavigator.cpp
 		include/i18n.h
 		src/i18n.cpp
+		include/screensaverinhibitor.h
+		src/screensaverinhibitor.cpp
 		include/theme.h
 		src/theme.cpp
 		include/discoverymanager.h
@@ -94,6 +100,10 @@ if(CHIAKI_ENABLE_CLI)
 endif()
 
 target_link_libraries(gordeck Qt5::Core Qt5::Widgets Qt5::Gui Qt5::Concurrent Qt5::Multimedia Qt5::OpenGL Qt5::Svg)
+if(UNIX AND NOT APPLE)
+	target_link_libraries(gordeck Qt5::DBus)
+	target_compile_definitions(gordeck PRIVATE CHIAKI_GUI_ENABLE_DBUS)
+endif()
 if(APPLE)
 	target_link_libraries(gordeck Qt5::MacExtras)
 	target_compile_definitions(gordeck PRIVATE CHIAKI_GUI_ENABLE_QT_MACEXTRAS)

@@ -6,6 +6,7 @@
 #include <loginpindialog.h>
 #include <settings.h>
 #include <i18n.h>
+#include <screensaverinhibitor.h>
 
 #include <moderndialog.h>
 
@@ -23,6 +24,7 @@ StreamWindow::StreamWindow(const StreamSessionConnectInfo &connect_info, QWidget
 		
 	session = nullptr;
 	av_widget = nullptr;
+	screensaver_inhibitor = nullptr;
 
 	try
 	{
@@ -39,6 +41,8 @@ StreamWindow::StreamWindow(const StreamSessionConnectInfo &connect_info, QWidget
 
 StreamWindow::~StreamWindow()
 {
+	// uses the session's log, so delete it before the session
+	delete screensaver_inhibitor;
 	// make sure av_widget is always deleted before the session
 	delete av_widget;
 }
@@ -74,6 +78,10 @@ void StreamWindow::Init()
 	grabKeyboard();
 
 	session->Start();
+
+	// gamepad input does not count as activity for the desktop, keep the screen on while streaming
+	screensaver_inhibitor = new ScreenSaverInhibitor(session->GetChiakiLog(), this);
+	screensaver_inhibitor->Inhibit(tr("Streaming from the PlayStation"));
 
 	auto fullscreen_action = new QAction(tr("Fullscreen"), this);
 	fullscreen_action->setShortcut(Qt::Key_F11);
@@ -196,6 +204,8 @@ void StreamWindow::closeEvent(QCloseEvent *event)
 
 void StreamWindow::SessionQuit(ChiakiQuitReason reason, const QString &reason_str)
 {
+	if(screensaver_inhibitor)
+		screensaver_inhibitor->Release();
 	if(reason != CHIAKI_QUIT_REASON_STOPPED)
 	{
 		QString m = I18n::QuitReasonString(reason);

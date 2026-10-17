@@ -1002,5 +1002,9 @@
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
+    <message>
+        <source>Streaming from the PlayStation</source>
+        <translation>Transmitindo do PlayStation</translation>
+    </message>
 </context>
 </TS>
