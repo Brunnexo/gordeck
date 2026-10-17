@@ -9,10 +9,9 @@
 #include "discoverymanager.h"
 #include "host.h"
 #include "gamepadnavigator.h"
+#include "hintbar.h"
 
 class ConsoleCarousel;
-class HintBar;
-class HintButton;
 class QLabel;
 class QTimer;
 class Settings;
@@ -63,6 +62,7 @@ class MainWindow : public QMainWindow
 		QTimer *toast_timer;
 
 		HintBar *hint_bar;
+		HintStyle hint_style;
 		HintButton *hint_activate;
 		HintButton *hint_wake;
 		HintButton *hint_options;

@@ -9,6 +9,17 @@
     </message>
 </context>
 <context>
+    <name>ConfirmDialog</name>
+    <message>
+        <source>Select</source>
+        <translation>Selecionar</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Voltar</translation>
+    </message>
+</context>
+<context>
     <name>ConsoleCarousel</name>
     <message>
         <source>Manual</source>
@@ -358,6 +369,10 @@
     <message>
         <source>Do you want to quit Gordeck?</source>
         <translation>Deseja sair do Gordeck?</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
     </message>
 </context>
 <context>

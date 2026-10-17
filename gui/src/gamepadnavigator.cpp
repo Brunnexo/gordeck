@@ -7,10 +7,13 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QDialog>
+#include <QDialogButtonBox>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QWidget>
+
+#include <algorithm>
 
 #define STICK_THRESHOLD 20000
 #define REPEAT_DELAY_MS 380
@@ -33,6 +36,44 @@ GamepadNavigator::GamepadNavigator(QWidget *main_window)
 	connect(ControllerManager::GetInstance(), &ControllerManager::AvailableControllersUpdated,
 			this, &GamepadNavigator::UpdateControllers);
 	UpdateControllers();
+
+	// left/right moves between the buttons of dialogs, also for keyboard input
+	// (e.g. Steam Input's desktop configuration maps the d-pad to the arrow keys)
+	qApp->installEventFilter(this);
+}
+
+bool GamepadNavigator::eventFilter(QObject *watched, QEvent *event)
+{
+	if(event->type() != QEvent::KeyPress)
+		return QObject::eventFilter(watched, event);
+	auto key_event = static_cast<QKeyEvent *>(event);
+	int key = key_event->key();
+	if(key != Qt::Key_Left && key != Qt::Key_Right)
+		return QObject::eventFilter(watched, event);
+
+	auto button = qobject_cast<QAbstractButton *>(watched);
+	if(!button)
+		return QObject::eventFilter(watched, event);
+	auto box = qobject_cast<QDialogButtonBox *>(button->parentWidget());
+	if(!box)
+		return QObject::eventFilter(watched, event);
+
+	QList<QAbstractButton *> buttons;
+	for(auto b : box->buttons())
+	{
+		if(b->isVisible() && b->isEnabled())
+			buttons.append(b);
+	}
+	std::sort(buttons.begin(), buttons.end(), [](QAbstractButton *a, QAbstractButton *b) {
+		return a->x() < b->x();
+	});
+	int index = buttons.indexOf(button);
+	if(index < 0)
+		return QObject::eventFilter(watched, event);
+	index += key == Qt::Key_Left ? -1 : 1;
+	if(index >= 0 && index < buttons.count())
+		buttons[index]->setFocus(key == Qt::Key_Left ? Qt::BacktabFocusReason : Qt::TabFocusReason);
+	return true;
 }
 
 GamepadNavigator::~GamepadNavigator()

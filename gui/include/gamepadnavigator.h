@@ -58,6 +58,9 @@ class GamepadNavigator : public QObject
 		void Dispatch(GamepadButton button);
 		bool DispatchToPopupOrDialog(GamepadButton button);
 
+	protected:
+		bool eventFilter(QObject *watched, QEvent *event) override;
+
 	private slots:
 		void UpdateControllers();
 		void Repeat();

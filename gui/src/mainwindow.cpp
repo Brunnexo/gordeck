@@ -2,6 +2,7 @@
 
 #include <mainwindow.h>
 #include <consolecarousel.h>
+#include <confirmdialog.h>
 #include <hintbar.h>
 #include <i18n.h>
 #include <settings.h>
@@ -96,7 +97,8 @@ MainWindow::MainWindow(Settings *settings, QWidget *parent)
 	gamepad(nullptr),
 	pending_connect(false),
 	title_label(nullptr),
-	toast_label(nullptr)
+	toast_label(nullptr),
+	hint_style(HintStyle::Keyboard)
 {
 	setWindowTitle(QGuiApplication::applicationDisplayName());
 
@@ -495,6 +497,7 @@ void MainWindow::UpdateStatus()
 		}
 	}
 	hint_bar->SetStyle(style);
+	hint_style = style;
 
 	bool discovery = settings->GetDiscoveryEnabled();
 	discovery_icon_label->setPixmap(RenderIcon(discovery ? ":/icons/ui-search.svg" : ":/icons/ui-search-off.svg",
@@ -644,10 +647,9 @@ void MainWindow::DeleteManualHost(const DisplayServer &server)
 {
 	if(server.discovered)
 		return;
-	int r = QMessageBox::question(this, tr("Delete Console"),
+	if(!ConfirmDialog::Ask(this, hint_style, tr("Delete Console"),
 			tr("Do you really want to remove the console %1 from the list?").arg(server.GetHostAddr()),
-			QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-	if(r != QMessageBox::Yes)
+			tr("Delete"), tr("Cancel"), true))
 		return;
 	settings->RemoveManualHost(server.manual_host.GetID());
 }
@@ -733,9 +735,8 @@ void MainWindow::ToggleFullscreen()
 
 void MainWindow::RequestQuit()
 {
-	int r = QMessageBox::question(this, tr("Quit"), tr("Do you want to quit Gordeck?"),
-			QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-	if(r == QMessageBox::Yes)
+	if(ConfirmDialog::Ask(this, hint_style, tr("Quit"), tr("Do you want to quit Gordeck?"),
+			tr("Quit"), tr("Cancel")))
 		Quit();
 }
 
