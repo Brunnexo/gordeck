@@ -24,19 +24,19 @@ O **Gordeck** transmite os jogos do seu **PS5 ou PS4** para o **Steam Deck** pel
 
 ## Por que o Gordeck
 
-🎮 **Feito para o controle.** Uma interface em tela cheia no estilo dos frontends de emulação, com carrossel de consoles, menus e janelas que você navega só com o direcional e os botões. Sem teclado, sem mouse.
+**Feito para o controle.** Uma interface em tela cheia no estilo dos frontends de emulação, com carrossel de consoles, menus e janelas que você navega só com o direcional e os botões. Sem teclado, sem mouse.
 
-⚡ **Um botão para jogar.** Se o console estiver em repouso, o Gordeck liga o PlayStation e começa a transmissão sozinho assim que ele estiver pronto.
+**Um botão para jogar.** Se o console estiver em repouso, o Gordeck liga o PlayStation e começa a transmissão sozinho assim que ele estiver pronto.
 
-🕹️ **Mostra os botões certos.** As dicas na tela se adaptam ao controle que você está usando: Steam Deck, DualSense/DualShock ou controle genérico.
+**Mostra os botões certos.** As dicas na tela se adaptam ao controle que você está usando: Steam Deck, DualSense/DualShock ou controle genérico.
 
-🇧🇷 **Em português.** Toda a interface está em português do Brasil, com o inglês disponível nas configurações.
+**Em português.** Toda a interface está em português do Brasil, com o inglês disponível nas configurações.
 
-🖥️ **Tela sempre acesa.** Durante a transmissão, o Steam Deck não apaga a tela nem entra em repouso enquanto você joga só com o controle.
+**Tela sempre acesa.** Durante a transmissão, o Steam Deck não apaga a tela nem entra em repouso enquanto você joga só com o controle.
 
-🚪 **Saída de emergência.** Segure o botão home por 7 segundos para encerrar a transmissão a qualquer momento.
+**Saída de emergência.** Segure o botão home por 7 segundos para encerrar a transmissão a qualquer momento.
 
-📚 **Direto na biblioteca da Steam.** O instalador adiciona o Gordeck à Steam com ícone, capas e banner, pronto para abrir no modo Jogo.
+**Direto na biblioteca da Steam.** O instalador adiciona o Gordeck à Steam com ícone, capas e banner, pronto para abrir no modo Jogo.
 
 <p align="center">
   <img src="assets/capturas/configuracoes.png" width="49%" alt="Configurações">

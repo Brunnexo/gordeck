@@ -24,19 +24,19 @@
 
 ## Why Gordeck
 
-🎮 **Built for the controller.** A full-screen interface in the style of emulation frontends, with a console carousel, menus and dialogs you navigate using only the D-pad and buttons. No keyboard, no mouse.
+**Built for the controller.** A full-screen interface in the style of emulation frontends, with a console carousel, menus and dialogs you navigate using only the D-pad and buttons. No keyboard, no mouse.
 
-⚡ **One button to play.** If the console is in rest mode, Gordeck wakes the PlayStation and starts streaming on its own as soon as it is ready.
+**One button to play.** If the console is in rest mode, Gordeck wakes the PlayStation and starts streaming on its own as soon as it is ready.
 
-🕹️ **Shows the right buttons.** On-screen hints adapt to the controller you are using: Steam Deck, DualSense/DualShock or a generic gamepad.
+**Shows the right buttons.** On-screen hints adapt to the controller you are using: Steam Deck, DualSense/DualShock or a generic gamepad.
 
-🌎 **In your language.** The interface is available in English and Brazilian Portuguese, switchable in the settings.
+**In your language.** The interface is available in English and Brazilian Portuguese, switchable in the settings.
 
-🖥️ **Screen always on.** While streaming, the Steam Deck never dims the screen or goes to sleep while you play with the controller alone.
+**Screen always on.** While streaming, the Steam Deck never dims the screen or goes to sleep while you play with the controller alone.
 
-🚪 **Emergency exit.** Hold the home button for 7 seconds to end the stream at any time.
+**Emergency exit.** Hold the home button for 7 seconds to end the stream at any time.
 
-📚 **Right in your Steam library.** The installer adds Gordeck to Steam with an icon, artwork and banner, ready to launch from Gaming Mode.
+**Right in your Steam library.** The installer adds Gordeck to Steam with an icon, artwork and banner, ready to launch from Gaming Mode.
 
 <p align="center">
   <img src="assets/capturas/configuracoes.png" width="49%" alt="Settings">
