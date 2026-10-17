@@ -103,7 +103,7 @@ No. The installer imports your registered consoles into Gordeck.
 
 Gordeck was born from [chiaki4deck](https://streetpea.github.io/chiaki4deck/), by Street Pea, which in turn is based on [Chiaki](https://git.sr.ht/~thestr4ng3r/chiaki), by thestr4ng3r. Thanks to everyone who contributed to those projects.
 
-Want to build or contribute? See the [development guide](DESENVOLVIMENTO.md) (in Portuguese).
+Want to build or contribute? See the [development guide](DEVELOPMENT.md).
 
 ## License
 

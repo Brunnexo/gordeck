@@ -1,4 +1,8 @@
 <p align="center">
+  <a href="README.md">English</a> &nbsp;|&nbsp; <b>Português (Brasil)</b>
+</p>
+
+<p align="center">
   <img src="assets/gordeck-banner.png" alt="Gordeck - Remote Play">
 </p>
 

@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="DEVELOPMENT.md">English</a> &nbsp;|&nbsp; <b>Português (Brasil)</b>
+</p>
+
 # Guia de desenvolvimento
 
 Como compilar, testar, traduzir e publicar o Gordeck.
