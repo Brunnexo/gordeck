@@ -4,6 +4,7 @@
 #define CHIAKI_THEME_H
 
 #include <QColor>
+#include <QPixmap>
 
 class QApplication;
 
@@ -33,6 +34,11 @@ namespace Theme
 	 * including all dialogs.
 	 */
 	void Apply(QApplication &app);
+
+	/**
+	 * Render an svg icon, optionally tinted with color (if valid)
+	 */
+	QPixmap RenderIcon(const QString &filename, int size, const QColor &color, qreal dpr);
 }
 
 #endif // CHIAKI_THEME_H

@@ -51,6 +51,17 @@ bool GamepadNavigator::eventFilter(QObject *watched, QEvent *event)
 	if(key != Qt::Key_Left && key != Qt::Key_Right)
 		return QObject::eventFilter(watched, event);
 
+	// left/right changes the value of combo boxes without opening them
+	if(auto combo = qobject_cast<QComboBox *>(watched))
+	{
+		if(combo->isEditable() || combo->count() == 0)
+			return QObject::eventFilter(watched, event);
+		int index = combo->currentIndex() + (key == Qt::Key_Left ? -1 : 1);
+		if(index >= 0 && index < combo->count())
+			combo->setCurrentIndex(index);
+		return true;
+	}
+
 	auto button = qobject_cast<QAbstractButton *>(watched);
 	if(!button)
 		return QObject::eventFilter(watched, event);
@@ -252,14 +263,18 @@ void GamepadNavigator::Repeat()
 	Dispatch(repeat_button);
 }
 
-static void SendKey(QWidget *target, int key, Qt::KeyboardModifiers modifiers = Qt::NoModifier)
+/**
+ * @return whether the key press was accepted
+ */
+static bool SendKey(QWidget *target, int key, Qt::KeyboardModifiers modifiers = Qt::NoModifier)
 {
 	if(!target)
-		return;
+		return false;
 	QKeyEvent press(QEvent::KeyPress, key, modifiers);
 	QCoreApplication::sendEvent(target, &press);
 	QKeyEvent release(QEvent::KeyRelease, key, modifiers);
 	QCoreApplication::sendEvent(target, &release);
+	return press.isAccepted();
 }
 
 bool GamepadNavigator::DispatchToPopupOrDialog(GamepadButton button)
@@ -301,12 +316,19 @@ bool GamepadNavigator::DispatchToPopupOrDialog(GamepadButton button)
 	switch(button)
 	{
 		case GamepadButton::Up:
-		case GamepadButton::L1:
 			SendKey(modal, Qt::Key_Backtab, Qt::ShiftModifier);
 			break;
 		case GamepadButton::Down:
-		case GamepadButton::R1:
 			SendKey(modal, Qt::Key_Tab);
+			break;
+		case GamepadButton::L1:
+			// dialogs with categories (like the settings) switch them with Ctrl+Tab
+			if(!SendKey(modal, Qt::Key_Backtab, Qt::ControlModifier | Qt::ShiftModifier))
+				SendKey(modal, Qt::Key_Backtab, Qt::ShiftModifier);
+			break;
+		case GamepadButton::R1:
+			if(!SendKey(modal, Qt::Key_Tab, Qt::ControlModifier))
+				SendKey(modal, Qt::Key_Tab);
 			break;
 		case GamepadButton::Left:
 			SendKey(focus, Qt::Key_Left);

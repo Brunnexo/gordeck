@@ -5,6 +5,8 @@
 #include <QApplication>
 #include <QPalette>
 #include <QStyleFactory>
+#include <QPainter>
+#include <QSvgRenderer>
 
 static const char * const stylesheet = R"(
 QWidget {
@@ -89,7 +91,17 @@ QLineEdit:disabled, QComboBox:disabled {
 
 QComboBox::drop-down {
 	border: none;
-	width: 26px;
+	width: 30px;
+}
+
+QComboBox::down-arrow {
+	image: url(:/icons/ui-chevron-down.svg);
+	width: 18px;
+	height: 18px;
+}
+
+QPushButton {
+	outline: none;
 }
 
 QComboBox QAbstractItemView {
@@ -171,6 +183,23 @@ QScrollBar::add-line, QScrollBar::sub-line {
 	width: 0px;
 }
 )";
+
+QPixmap Theme::RenderIcon(const QString &filename, int size, const QColor &color, qreal dpr)
+{
+	QSvgRenderer renderer(filename);
+	QPixmap pixmap(QSize(size, size) * dpr);
+	pixmap.setDevicePixelRatio(dpr);
+	pixmap.fill(Qt::transparent);
+	QPainter painter(&pixmap);
+	painter.setRenderHint(QPainter::Antialiasing);
+	renderer.render(&painter, QRectF(0, 0, size, size));
+	if(color.isValid())
+	{
+		painter.setCompositionMode(QPainter::CompositionMode_SourceAtop);
+		painter.fillRect(QRectF(0, 0, size, size), color);
+	}
+	return pixmap;
+}
 
 void Theme::Apply(QApplication &app)
 {

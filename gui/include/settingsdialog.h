@@ -3,14 +3,23 @@
 #ifndef CHIAKI_SETTINGSDIALOG_H
 #define CHIAKI_SETTINGSDIALOG_H
 
+#include "hintbar.h"
+
 #include <QDialog>
 
 class Settings;
-class QListWidget;
 class QComboBox;
-class QCheckBox;
+class QAbstractButton;
 class QLineEdit;
+class QPushButton;
+class QStackedWidget;
+class QVBoxLayout;
 
+/**
+ * Settings screen in the style of the main interface: categories on the left,
+ * one page of settings rows on the right, button hints at the bottom.
+ * Covers the parent window and can be used completely with a gamepad.
+ */
 class SettingsDialog : public QDialog
 {
 	Q_OBJECT
@@ -19,10 +28,13 @@ class SettingsDialog : public QDialog
 		Settings *settings;
 		bool language_changed;
 
-		QComboBox *language_combo_box;
-		QCheckBox *fullscreen_ui_check_box;
+		QStackedWidget *page_stack;
+		QList<QPushButton *> category_buttons;
 
-		QCheckBox *log_verbose_check_box;
+		QComboBox *language_combo_box;
+		QAbstractButton *fullscreen_ui_toggle;
+
+		QAbstractButton *log_verbose_toggle;
 		QComboBox *disconnect_action_combo_box;
 
 		QComboBox *resolution_combo_box;
@@ -31,12 +43,14 @@ class SettingsDialog : public QDialog
 		QComboBox *codec_combo_box;
 		QLineEdit *audio_buffer_size_edit;
 		QComboBox *audio_device_combo_box;
-		QCheckBox *pi_decoder_check_box;
+		QAbstractButton *pi_decoder_toggle;
 		QComboBox *hw_decoder_combo_box;
 
-		QListWidget *registered_hosts_list_widget;
-		QPushButton *delete_registered_host_button;
+		HintStyle hint_style;
+		QVBoxLayout *registered_hosts_layout;
 
+		QVBoxLayout *AddPage(const QString &title, const QString &icon);
+		QWidget *CreateRow(const QString &title, const QString &description, QWidget *control, int control_width = 340);
 		void UpdateBitratePlaceholder();
 
 	private slots:
@@ -49,17 +63,22 @@ class SettingsDialog : public QDialog
 		void BitrateEdited();
 		void CodecSelected();
 		void AudioBufferSizeEdited();
-		void AudioOutputSelected();
 		void HardwareDecodeEngineSelected();
 		void UpdateHardwareDecodeEngineComboBox();
 
 		void UpdateRegisteredHosts();
-		void UpdateRegisteredHostsButtons();
 		void RegisterNewHost();
-		void DeleteRegisteredHost();
+
+	protected:
+		void paintEvent(QPaintEvent *event) override;
+		void showEvent(QShowEvent *event) override;
+		void keyPressEvent(QKeyEvent *event) override;
 
 	public:
-		SettingsDialog(Settings *settings, QWidget *parent = nullptr);
+		SettingsDialog(Settings *settings, HintStyle hint_style, QWidget *parent = nullptr);
+
+		int GetCurrentPage() const;
+		void SetCurrentPage(int index);
 
 		/**
 		 * @return true if the dialog was closed because the language was changed

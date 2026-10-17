@@ -602,30 +602,6 @@
         <translation>Interface</translation>
     </message>
     <message>
-        <source>Language:</source>
-        <translation>Idioma:</translation>
-    </message>
-    <message>
-        <source>Start in Fullscreen:</source>
-        <translation>Iniciar em tela cheia:</translation>
-    </message>
-    <message>
-        <source>General</source>
-        <translation>Geral</translation>
-    </message>
-    <message>
-        <source>Verbose Logging:
-Warning: This logs A LOT!
-Don&apos;t enable for regular use.</source>
-        <translation>Log detalhado:
-Atenção: isso gera MUITOS registros!
-Não ative para uso normal.</translation>
-    </message>
-    <message>
-        <source>Log Directory:</source>
-        <translation>Pasta de logs:</translation>
-    </message>
-    <message>
         <source>Do Nothing</source>
         <translation>Não fazer nada</translation>
     </message>
@@ -638,16 +614,8 @@ Não ative para uso normal.</translation>
         <translation>Perguntar</translation>
     </message>
     <message>
-        <source>Action on Disconnect:</source>
-        <translation>Ação ao desconectar:</translation>
-    </message>
-    <message>
         <source>Auto</source>
         <translation>Automático</translation>
-    </message>
-    <message>
-        <source>Audio Output Device:</source>
-        <translation>Dispositivo de saída de áudio:</translation>
     </message>
     <message>
         <source>This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License version 3 as published by the Free Software Foundation.</source>
@@ -658,72 +626,28 @@ Não ative para uso normal.</translation>
         <translation>Este programa é distribuído na esperança de que seja útil, mas SEM NENHUMA GARANTIA; sem sequer a garantia implícita de COMERCIALIZAÇÃO ou ADEQUAÇÃO A UM DETERMINADO PROPÓSITO. Consulte a GNU General Public License para mais detalhes.</translation>
     </message>
     <message>
-        <source>Stream Settings</source>
-        <translation>Configurações de transmissão</translation>
-    </message>
-    <message>
         <source>1080p (PS5 and PS4 Pro only)</source>
         <translation>1080p (somente PS5 e PS4 Pro)</translation>
-    </message>
-    <message>
-        <source>Resolution:</source>
-        <translation>Resolução:</translation>
-    </message>
-    <message>
-        <source>FPS:</source>
-        <translation>FPS:</translation>
-    </message>
-    <message>
-        <source>Bitrate:</source>
-        <translation>Taxa de bits:</translation>
     </message>
     <message>
         <source>H265 (PS5 only)</source>
         <translation>H265 (somente PS5)</translation>
     </message>
     <message>
-        <source>Codec:</source>
-        <translation>Codec:</translation>
-    </message>
-    <message>
-        <source>Audio Buffer Size:</source>
-        <translation>Tamanho do buffer de áudio:</translation>
-    </message>
-    <message>
         <source>Default (%1)</source>
         <translation>Padrão (%1)</translation>
-    </message>
-    <message>
-        <source>Decode Settings</source>
-        <translation>Configurações de decodificação</translation>
-    </message>
-    <message>
-        <source>Use Raspberry Pi Decoder:</source>
-        <translation>Usar decodificador do Raspberry Pi:</translation>
     </message>
     <message>
         <source>none</source>
         <translation>nenhum</translation>
     </message>
     <message>
-        <source>Hardware decode method:</source>
-        <translation>Decodificação por hardware:</translation>
-    </message>
-    <message>
         <source>Registered Consoles</source>
         <translation>Consoles registrados</translation>
     </message>
     <message>
-        <source>Register New</source>
-        <translation>Registrar novo</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>Excluir</translation>
-    </message>
-    <message>
-        <source>Key Settings</source>
-        <translation>Mapeamento de teclas</translation>
     </message>
     <message>
         <source>Automatic (%1)</source>
@@ -734,20 +658,168 @@ Não ative para uso normal.</translation>
         <translation>Excluir console registrado</translation>
     </message>
     <message>
-        <source>Are you sure you want to delete the registered console with ID %1?</source>
-        <translation>Tem certeza de que deseja excluir o console registrado com ID %1?</translation>
-    </message>
-    <message>
-        <source>About Gordeck</source>
-        <translation>Sobre o Gordeck</translation>
-    </message>
-    <message>
         <source>Version %1</source>
         <translation>Versão %1</translation>
     </message>
     <message>
         <source>Based on chiaki4deck by Street Pea and Chiaki by thestr4ng3r.</source>
         <translation>Baseado no chiaki4deck, de Street Pea, e no Chiaki, de thestr4ng3r.</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Idioma</translation>
+    </message>
+    <message>
+        <source>Language of the interface.</source>
+        <translation>Idioma da interface.</translation>
+    </message>
+    <message>
+        <source>Start in Fullscreen</source>
+        <translation>Iniciar em tela cheia</translation>
+    </message>
+    <message>
+        <source>Gordeck opens using the whole screen.</source>
+        <translation>O Gordeck abre ocupando a tela inteira.</translation>
+    </message>
+    <message>
+        <source>Stream</source>
+        <translation>Transmissão</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>Resolução</translation>
+    </message>
+    <message>
+        <source>Resolution of the streamed video.</source>
+        <translation>Resolução do vídeo transmitido.</translation>
+    </message>
+    <message>
+        <source>Frame Rate</source>
+        <translation>Taxa de quadros</translation>
+    </message>
+    <message>
+        <source>Frames per second of the stream.</source>
+        <translation>Quadros por segundo da transmissão.</translation>
+    </message>
+    <message>
+        <source>Codec</source>
+        <translation>Codec</translation>
+    </message>
+    <message>
+        <source>H265 gives better quality at the same bitrate, but only works with the PS5.</source>
+        <translation>O H265 tem melhor qualidade com a mesma taxa de bits, mas só funciona com o PS5.</translation>
+    </message>
+    <message>
+        <source>Bitrate</source>
+        <translation>Taxa de bits</translation>
+    </message>
+    <message>
+        <source>In kbit/s. Leave empty to use the automatic value.</source>
+        <translation>Em kbit/s. Deixe vazio para usar o valor automático.</translation>
+    </message>
+    <message>
+        <source>Audio Output Device</source>
+        <translation>Saída de áudio</translation>
+    </message>
+    <message>
+        <source>Where the sound of the console is played.</source>
+        <translation>Onde o som do console é reproduzido.</translation>
+    </message>
+    <message>
+        <source>Audio Buffer Size</source>
+        <translation>Buffer de áudio</translation>
+    </message>
+    <message>
+        <source>Increase it if the sound stutters.</source>
+        <translation>Aumente se o som estiver falhando.</translation>
+    </message>
+    <message>
+        <source>Action on Disconnect</source>
+        <translation>Ao desconectar</translation>
+    </message>
+    <message>
+        <source>What happens to the console when the stream is closed.</source>
+        <translation>O que acontece com o console quando a transmissão é fechada.</translation>
+    </message>
+    <message>
+        <source>Decoding</source>
+        <translation>Decodificação</translation>
+    </message>
+    <message>
+        <source>Use Raspberry Pi Decoder</source>
+        <translation>Usar decodificador do Raspberry Pi</translation>
+    </message>
+    <message>
+        <source>Hardware Decoding</source>
+        <translation>Decodificação por hardware</translation>
+    </message>
+    <message>
+        <source>Decodes the video on the GPU. On the Steam Deck, use vaapi.</source>
+        <translation>Decodifica o vídeo na GPU. No Steam Deck, use vaapi.</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>Registrar</translation>
+    </message>
+    <message>
+        <source>Register New Console</source>
+        <translation>Registrar novo console</translation>
+    </message>
+    <message>
+        <source>Pair Gordeck with a PS4 or PS5 using the PIN shown on the console.</source>
+        <translation>Pareie o Gordeck com um PS4 ou PS5 usando o PIN exibido no console.</translation>
+    </message>
+    <message>
+        <source>Keyboard</source>
+        <translation>Teclado</translation>
+    </message>
+    <message>
+        <source>Keys that control the console during the stream when using a keyboard. Select a key and press the new key to change it.</source>
+        <translation>Teclas que controlam o console durante a transmissão ao usar um teclado. Selecione uma tecla e pressione a nova tecla para alterá-la.</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>Sobre</translation>
+    </message>
+    <message>
+        <source>Verbose Logging</source>
+        <translation>Log detalhado</translation>
+    </message>
+    <message>
+        <source>Warning: this logs A LOT! Don&apos;t enable it for regular use.</source>
+        <translation>Atenção: gera MUITOS registros! Não ative para uso normal.</translation>
+    </message>
+    <message>
+        <source>Log Directory</source>
+        <translation>Pasta de logs</translation>
+    </message>
+    <message>
+        <source>Navigate</source>
+        <translation>Navegar</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Categoria</translation>
+    </message>
+    <message>
+        <source>Select</source>
+        <translation>Selecionar</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Voltar</translation>
+    </message>
+    <message>
+        <source>No console registered yet.</source>
+        <translation>Nenhum console registrado ainda.</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to delete the registered console %1 (ID %2)?</source>
+        <translation>Tem certeza de que deseja excluir o console registrado %1 (ID %2)?</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
     </message>
 </context>
 <context>

@@ -15,6 +15,12 @@
     <file>ui-play.svg</file>
     <file>ui-power.svg</file>
     <file>ui-search.svg</file>
+    <file>ui-settings.svg</file>
+    <file>ui-display.svg</file>
+    <file>ui-chip.svg</file>
+    <file>ui-keyboard.svg</file>
+    <file>ui-info.svg</file>
+    <file>ui-chevron-down.svg</file>
     <file>ui-search-off.svg</file>
   </qresource>
 </RCC>

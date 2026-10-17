@@ -34,29 +34,12 @@
 #define CLOCK_INTERVAL_MS 10000
 #define PENDING_CONNECT_TIMEOUT_MS 90000
 
-static QPixmap RenderIcon(const QString &filename, int size, const QColor &color, qreal dpr)
-{
-	QSvgRenderer renderer(filename);
-	QPixmap pixmap(QSize(size, size) * dpr);
-	pixmap.setDevicePixelRatio(dpr);
-	pixmap.fill(Qt::transparent);
-	QPainter painter(&pixmap);
-	painter.setRenderHint(QPainter::Antialiasing);
-	renderer.render(&painter, QRectF(0, 0, size, size));
-	if(color.isValid())
-	{
-		painter.setCompositionMode(QPainter::CompositionMode_SourceAtop);
-		painter.fillRect(QRectF(0, 0, size, size), color);
-	}
-	return pixmap;
-}
-
 static QIcon MenuIcon(const QString &filename)
 {
 	QIcon icon;
-	icon.addPixmap(RenderIcon(filename, 48, Theme::text, 1.0), QIcon::Normal);
-	icon.addPixmap(RenderIcon(filename, 48, Qt::white, 1.0), QIcon::Active);
-	icon.addPixmap(RenderIcon(filename, 48, QColor(0x5d, 0x6a, 0x82), 1.0), QIcon::Disabled);
+	icon.addPixmap(Theme::RenderIcon(filename, 48, Theme::text, 1.0), QIcon::Normal);
+	icon.addPixmap(Theme::RenderIcon(filename, 48, Qt::white, 1.0), QIcon::Active);
+	icon.addPixmap(Theme::RenderIcon(filename, 48, QColor(0x5d, 0x6a, 0x82), 1.0), QIcon::Disabled);
 	return icon;
 }
 
@@ -116,7 +99,7 @@ MainWindow::MainWindow(Settings *settings, QWidget *parent)
 	root_layout->addLayout(header_layout);
 
 	auto logo_label = new QLabel(this);
-	logo_label->setPixmap(RenderIcon(":/icons/gordeck.svg", 44, QColor(), devicePixelRatioF()));
+	logo_label->setPixmap(Theme::RenderIcon(":/icons/gordeck.svg", 44, QColor(), devicePixelRatioF()));
 	header_layout->addWidget(logo_label);
 
 	title_label = new QLabel(this);
@@ -478,7 +461,7 @@ void MainWindow::UpdateStatus()
 	HintStyle style = HintStyle::Keyboard;
 	if(gamepad_connected)
 	{
-		controller_icon_label->setPixmap(RenderIcon(":/icons/ui-gamepad.svg", 22, Theme::state_ready, dpr));
+		controller_icon_label->setPixmap(Theme::RenderIcon(":/icons/ui-gamepad.svg", 22, Theme::state_ready, dpr));
 		QString name = gamepad->GetActiveControllerName();
 		switch(gamepad->GetActiveLayout())
 		{
@@ -500,7 +483,7 @@ void MainWindow::UpdateStatus()
 	hint_style = style;
 
 	bool discovery = settings->GetDiscoveryEnabled();
-	discovery_icon_label->setPixmap(RenderIcon(discovery ? ":/icons/ui-search.svg" : ":/icons/ui-search-off.svg",
+	discovery_icon_label->setPixmap(Theme::RenderIcon(discovery ? ":/icons/ui-search.svg" : ":/icons/ui-search-off.svg",
 			22, discovery ? Theme::accent_light : Theme::text_muted, dpr));
 	discovery_label->setText(discovery ? tr("Auto search on") : tr("Auto search off"));
 }
@@ -706,12 +689,15 @@ void MainWindow::ToggleDiscovery()
 void MainWindow::ShowSettings()
 {
 	// the dialog is reopened if the language was changed, so it gets fully retranslated
+	int page = 0;
 	while(true)
 	{
-		SettingsDialog dialog(settings, this);
+		SettingsDialog dialog(settings, hint_style, this);
+		dialog.SetCurrentPage(page);
 		dialog.exec();
 		if(!dialog.GetLanguageChanged())
 			break;
+		page = dialog.GetCurrentPage();
 	}
 
 	bool fullscreen = settings->GetFullscreenUI();

@@ -5,6 +5,7 @@
 
 #include <QHBoxLayout>
 #include <QPainter>
+#include <QPainterPath>
 
 #include <algorithm>
 #include <cmath>
@@ -45,6 +46,8 @@ qreal HintButton::GlyphWidth() const
 {
 	if(style != HintStyle::Keyboard)
 	{
+		if(glyph == HintGlyph::Shoulders)
+			return GLYPH_SIZE * 2.4;
 		// Steam Deck and PlayStation system buttons are pill shaped
 		if((glyph == HintGlyph::Start || glyph == HintGlyph::Select) && style != HintStyle::Xbox)
 			return GLYPH_SIZE * 1.4;
@@ -236,6 +239,46 @@ void HintButton::PaintSystemButton(QPainter &painter, const QRectF &rect)
 	}
 }
 
+void HintButton::PaintDPad(QPainter &painter, const QRectF &rect)
+{
+	QPointF c = rect.center();
+	qreal arm = rect.width() * 0.17;
+	qreal len = rect.width() * 0.46;
+	QPainterPath cross;
+	cross.addRoundedRect(QRectF(c.x() - arm, c.y() - len, arm * 2.0, len * 2.0), 2.5, 2.5);
+	cross.addRoundedRect(QRectF(c.x() - len, c.y() - arm, len * 2.0, arm * 2.0), 2.5, 2.5);
+	cross.setFillRule(Qt::WindingFill);
+	painter.setPen(QPen(dark_button_rim, 1.2));
+	painter.setBrush(style == HintStyle::Xbox ? Theme::surface_light.lighter(160) : dark_button);
+	painter.drawPath(cross.simplified());
+	painter.setPen(Qt::NoPen);
+	painter.setBrush(QColor(0xf2, 0xf4, 0xf8, 200));
+	painter.drawEllipse(c, arm * 0.45, arm * 0.45);
+}
+
+void HintButton::PaintShoulders(QPainter &painter, const QRectF &rect)
+{
+	QString left = style == HintStyle::Xbox ? "LB" : "L1";
+	QString right = style == HintStyle::Xbox ? "RB" : "R1";
+	qreal gap = 4.0;
+	qreal w = (rect.width() - gap) / 2.0;
+	QFont f = font();
+	f.setBold(true);
+	f.setPointSizeF(9.0);
+	painter.setFont(f);
+	int i = 0;
+	for(const QString &label : { left, right })
+	{
+		QRectF r(rect.left() + i * (w + gap), rect.top() + rect.height() * 0.16, w, rect.height() * 0.68);
+		painter.setPen(QPen(dark_button_rim, 1.5));
+		painter.setBrush(style == HintStyle::Xbox ? Theme::surface_light.lighter(140) : dark_button);
+		painter.drawRoundedRect(r, 6.0, 6.0);
+		painter.setPen(QColor(0xf2, 0xf4, 0xf8));
+		painter.drawText(r, Qt::AlignCenter, label);
+		i++;
+	}
+}
+
 void HintButton::paintEvent(QPaintEvent *)
 {
 	QPainter painter(this);
@@ -267,6 +310,10 @@ void HintButton::paintEvent(QPaintEvent *)
 	}
 	else if(glyph == HintGlyph::Start || glyph == HintGlyph::Select)
 		PaintSystemButton(painter, glyph_rect);
+	else if(glyph == HintGlyph::DPad)
+		PaintDPad(painter, glyph_rect);
+	else if(glyph == HintGlyph::Shoulders)
+		PaintShoulders(painter, glyph_rect);
 	else
 		PaintFaceButton(painter, glyph_rect);
 

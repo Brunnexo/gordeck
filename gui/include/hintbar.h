@@ -16,7 +16,9 @@ enum class HintGlyph
 	X,
 	Y,
 	Start,
-	Select
+	Select,
+	DPad,
+	Shoulders
 };
 
 enum class HintStyle
@@ -43,6 +45,8 @@ class HintButton : public QAbstractButton
 		qreal GlyphWidth() const;
 		void PaintFaceButton(QPainter &painter, const QRectF &rect);
 		void PaintSystemButton(QPainter &painter, const QRectF &rect);
+		void PaintDPad(QPainter &painter, const QRectF &rect);
+		void PaintShoulders(QPainter &painter, const QRectF &rect);
 
 	protected:
 		void paintEvent(QPaintEvent *event) override;
