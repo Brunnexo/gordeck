@@ -88,6 +88,8 @@ void ConfirmDialog::showEvent(QShowEvent *event)
 		QPoint center = window->mapToGlobal(window->rect().center());
 		move(center - QPoint(width() / 2, height() / 2));
 	}
+	activateWindow();
+	raise();
 }
 
 void ConfirmDialog::paintEvent(QPaintEvent *)

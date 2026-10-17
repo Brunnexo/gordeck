@@ -231,11 +231,13 @@ void GamepadNavigator::ControllerStateChanged(Controller *controller)
 			repeat_button = button;
 			repeat_timer.start(REPEAT_DELAY_MS);
 		}
-		Dispatch(button);
-		// dispatching may have opened a modal dialog with its own event loop,
-		// during which this controller could have been closed
-		if(!controllers.contains(id))
-			return;
+		// Dispatch from the event loop instead of from within the SDL polling timer:
+		// a button may open a modal dialog with its own event loop, and Qt never fires
+		// a timer again while its handler is still running, which would block all
+		// gamepad input inside the dialog.
+		QMetaObject::invokeMethod(this, [this, button]() {
+			Dispatch(button);
+		}, Qt::QueuedConnection);
 	}
 }
 
@@ -289,6 +291,12 @@ bool GamepadNavigator::DispatchToPopupOrDialog(GamepadButton button)
 	QWidget *focus = QApplication::focusWidget();
 	if(focus && focus != modal && !modal->isAncestorOf(focus))
 		focus = nullptr;
+	// the dialog might not be the active window (e.g. if the compositor did not focus it),
+	// so fall back to the widget that has focus within the dialog
+	if(!focus)
+		focus = modal->focusWidget();
+	if(!modal->isActiveWindow())
+		modal->activateWindow();
 
 	switch(button)
 	{
