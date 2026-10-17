@@ -1,108 +1,112 @@
 <p align="center">
+  <b>English</b> &nbsp;|&nbsp; <a href="README.pt-BR.md">Português (Brasil)</a>
+</p>
+
+<p align="center">
   <img src="assets/gordeck-banner.png" alt="Gordeck - Remote Play">
 </p>
 
-<h3 align="center">Jogue seu PlayStation no Steam Deck, do sofá, da cama ou de qualquer lugar da casa.</h3>
+<h3 align="center">Play your PlayStation on the Steam Deck, from the couch, the bed or anywhere in the house.</h3>
 
 <p align="center">
-  <a href="https://github.com/Brunnexo/gordeck/releases/latest"><img src="https://img.shields.io/github/v/release/Brunnexo/gordeck?label=baixar&style=for-the-badge&color=2f8cff" alt="Baixar"></a>
+  <a href="https://github.com/Brunnexo/gordeck/releases/latest"><img src="https://img.shields.io/github/v/release/Brunnexo/gordeck?label=download&style=for-the-badge&color=2f8cff" alt="Download"></a>
   <a href="https://github.com/Brunnexo/gordeck/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/Brunnexo/gordeck/build.yml?branch=main&label=build&style=for-the-badge" alt="Build"></a>
-  <a href="COPYING"><img src="https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue?style=for-the-badge" alt="Licença AGPL-3.0"></a>
+  <a href="COPYING"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=for-the-badge" alt="AGPL-3.0 License"></a>
 </p>
 
 ---
 
-O **Gordeck** transmite os jogos do seu **PS5 ou PS4** para o **Steam Deck** pela rede de casa, com imagem, som e controle, como se você estivesse na frente da TV. Gratuito, de código aberto e feito para ser usado só com o controle: abriu, escolheu o console, apertou **A** e está jogando.
+**Gordeck** streams your **PS5 or PS4** games to the **Steam Deck** over your home network, with video, audio and controller input, just like sitting in front of the TV. Free, open source and built to be used with nothing but the controller: open it, pick your console, press **A** and play.
 
 <p align="center">
-  <img src="assets/capturas/tela-principal.png" width="80%" alt="Tela principal do Gordeck">
+  <img src="assets/capturas/tela-principal.png" width="80%" alt="Gordeck main screen">
 </p>
 
-## Por que o Gordeck
+## Why Gordeck
 
-🎮 **Feito para o controle.** Uma interface em tela cheia no estilo dos frontends de emulação, com carrossel de consoles, menus e janelas que você navega só com o direcional e os botões. Sem teclado, sem mouse.
+🎮 **Built for the controller.** A full-screen interface in the style of emulation frontends, with a console carousel, menus and dialogs you navigate using only the D-pad and buttons. No keyboard, no mouse.
 
-⚡ **Um botão para jogar.** Se o console estiver em repouso, o Gordeck liga o PlayStation e começa a transmissão sozinho assim que ele estiver pronto.
+⚡ **One button to play.** If the console is in rest mode, Gordeck wakes the PlayStation and starts streaming on its own as soon as it is ready.
 
-🕹️ **Mostra os botões certos.** As dicas na tela se adaptam ao controle que você está usando: Steam Deck, DualSense/DualShock ou controle genérico.
+🕹️ **Shows the right buttons.** On-screen hints adapt to the controller you are using: Steam Deck, DualSense/DualShock or a generic gamepad.
 
-🇧🇷 **Em português.** Toda a interface está em português do Brasil, com o inglês disponível nas configurações.
+🌎 **In your language.** The interface is available in English and Brazilian Portuguese, switchable in the settings.
 
-🖥️ **Tela sempre acesa.** Durante a transmissão, o Steam Deck não apaga a tela nem entra em repouso enquanto você joga só com o controle.
+🖥️ **Screen always on.** While streaming, the Steam Deck never dims the screen or goes to sleep while you play with the controller alone.
 
-🚪 **Saída de emergência.** Segure o botão home por 7 segundos para encerrar a transmissão a qualquer momento.
+🚪 **Emergency exit.** Hold the home button for 7 seconds to end the stream at any time.
 
-📚 **Direto na biblioteca da Steam.** O instalador adiciona o Gordeck à Steam com ícone, capas e banner, pronto para abrir no modo Jogo.
+📚 **Right in your Steam library.** The installer adds Gordeck to Steam with an icon, artwork and banner, ready to launch from Gaming Mode.
 
 <p align="center">
-  <img src="assets/capturas/configuracoes.png" width="49%" alt="Configurações">
-  <img src="assets/capturas/opcoes.png" width="49%" alt="Opções do console">
+  <img src="assets/capturas/configuracoes.png" width="49%" alt="Settings">
+  <img src="assets/capturas/opcoes.png" width="49%" alt="Console options">
 </p>
 
-## Instalação no Steam Deck
+## Installing on the Steam Deck
 
-1. Mude para o **modo Desktop** (botão Steam › Ligar/desligar › Mudar para o modo Desktop).
-2. Baixe o **`Gordeck-Instalador.tar.gz`** da [página de downloads](https://github.com/Brunnexo/gordeck/releases/latest) e extraia o arquivo.
-3. Dê um duplo clique em **Instalar Gordeck** e siga as instruções.
-4. Volte ao **modo Jogo**: o Gordeck estará na sua biblioteca, em **Não-Steam**.
+1. Switch to **Desktop Mode** (Steam button › Power › Switch to Desktop).
+2. Download **`Gordeck-Instalador.tar.gz`** from the [releases page](https://github.com/Brunnexo/gordeck/releases/latest) and extract it.
+3. Double-click **Instalar Gordeck** and follow the instructions.
+4. Go back to **Gaming Mode**: Gordeck will be in your library, under **Non-Steam**.
 
-O instalador cuida de tudo: baixa os componentes necessários, instala o app, traz os consoles que você já tinha registrado no Chiaki4deck e coloca o Gordeck na Steam. Use o mesmo instalador para atualizar ou desinstalar.
+The installer takes care of everything: it downloads the required components, installs the app, imports the consoles you had already registered in Chiaki4deck and adds Gordeck to Steam. Use the same installer to update or uninstall.
 
-## Outras distribuições Linux
+## Other Linux distributions
 
-| Sistema | Download |
+| System | Download |
 |---|---|
-| Qualquer distribuição (Flatpak) | `gordeck.flatpak` › `flatpak install --user gordeck.flatpak` |
-| Ubuntu 24.04 e derivados | `gordeck-*-ubuntu-24.04-*.deb` |
+| Any distribution (Flatpak) | `gordeck.flatpak` › `flatpak install --user gordeck.flatpak` |
+| Ubuntu 24.04 and derivatives | `gordeck-*-ubuntu-24.04-*.deb` |
 | Debian 12 | `gordeck-*-debian-12-*.deb` |
 | Fedora 41 | `gordeck-*-fedora-41-*.rpm` |
 
-Todos os arquivos estão na [página de downloads](https://github.com/Brunnexo/gordeck/releases/latest).
+All files are on the [releases page](https://github.com/Brunnexo/gordeck/releases/latest).
 
-## Primeiros passos
+## Getting started
 
-1. Ligue o PlayStation e conecte o Steam Deck à **mesma rede** dele.
-2. Abra o Gordeck. O console aparece sozinho na tela (ou use **Adicionar console** para informar o IP).
-3. Selecione o console e aperte **A** para registrar. No PlayStation, abra **Configurações › Sistema › Reprodução Remota › Vincular dispositivo** e digite no Gordeck o PIN que aparecer.
-4. Pronto! Daqui em diante, é só selecionar o console e apertar **A** para jogar.
+1. Turn on the PlayStation and connect the Steam Deck to the **same network**.
+2. Open Gordeck. The console shows up on screen by itself (or use **Add console** to enter its IP).
+3. Select the console and press **A** to register. On the PlayStation, open **Settings › System › Remote Play › Link Device** and type the PIN shown there into Gordeck.
+4. Done! From now on, just select the console and press **A** to play.
 
-> Para o PS4 e o PS5, o Gordeck também pede o **ID da sua conta PSN**. Veja como obter na [documentação do chiaki4deck](https://streetpea.github.io/chiaki4deck/setup/configuration/).
+> For both PS4 and PS5, Gordeck also asks for your **PSN account ID**. See how to get it in the [chiaki4deck documentation](https://streetpea.github.io/chiaki4deck/setup/configuration/).
 
-## Comandos
+## Controls
 
-| Controle | Teclado | Ação |
+| Controller | Keyboard | Action |
 |---|---|---|
-| Direcional / analógico | ← → | Escolher o console |
-| **A** | Enter | Conectar, registrar ou adicionar |
-| **B** | Esc | Voltar / sair |
-| **X** | W | Ligar o console |
-| **Y** | O | Opções do console |
-| **≡** Menu | F1 | Configurações |
-| **⧉** View | F3 | Busca automática de consoles |
-| Segurar **home** por 7 s | — | Encerrar a transmissão |
+| D-pad / stick | ← → | Pick a console |
+| **A** | Enter | Connect, register or add |
+| **B** | Esc | Back / quit |
+| **X** | W | Wake the console |
+| **Y** | O | Console options |
+| **≡** Menu | F1 | Settings |
+| **⧉** View | F3 | Automatic console discovery |
+| Hold **home** for 7 s | — | End the stream |
 
-## Perguntas frequentes
+## FAQ
 
-**Preciso de um PlayStation Plus ou de alguma assinatura?**
-Não. O Remote Play é um recurso gratuito do PS4 e do PS5.
+**Do I need PlayStation Plus or any subscription?**
+No. Remote Play is a free feature of the PS4 and PS5.
 
-**Funciona fora de casa?**
-Funciona melhor na mesma rede Wi-Fi. Para jogar de fora, é preciso configurar o roteador; veja a [documentação do chiaki4deck](https://streetpea.github.io/chiaki4deck/).
+**Does it work away from home?**
+It works best on the same Wi-Fi network. To play from outside, you need to configure your router; see the [chiaki4deck documentation](https://streetpea.github.io/chiaki4deck/).
 
-**O controle não responde no Gordeck.**
-Abra o Gordeck pela Steam (no modo Jogo ou como jogo não-Steam). Fora da Steam, o controle do Steam Deck não é reconhecido pelo app.
+**The controller does not respond in Gordeck.**
+Launch Gordeck through Steam (in Gaming Mode or as a non-Steam game). Outside Steam, the Steam Deck controller is not recognized by the app.
 
-**Já usava o Chiaki4deck. Perco meus consoles?**
-Não. O instalador importa os consoles registrados para o Gordeck.
+**I was already using Chiaki4deck. Do I lose my consoles?**
+No. The installer imports your registered consoles into Gordeck.
 
-## Créditos
+## Credits
 
-O Gordeck nasceu do [chiaki4deck](https://streetpea.github.io/chiaki4deck/), de Street Pea, que por sua vez é baseado no [Chiaki](https://git.sr.ht/~thestr4ng3r/chiaki), de thestr4ng3r. Obrigado a todos que contribuíram com esses projetos.
+Gordeck was born from [chiaki4deck](https://streetpea.github.io/chiaki4deck/), by Street Pea, which in turn is based on [Chiaki](https://git.sr.ht/~thestr4ng3r/chiaki), by thestr4ng3r. Thanks to everyone who contributed to those projects.
 
-Quer compilar ou contribuir? Veja o [guia de desenvolvimento](DESENVOLVIMENTO.md).
+Want to build or contribute? See the [development guide](DESENVOLVIMENTO.md) (in Portuguese).
 
-## Licença
+## License
 
-Software livre, distribuído sob a [GNU Affero General Public License versão 3](COPYING).
+Free software, distributed under the [GNU Affero General Public License version 3](COPYING).
 
-<sub>PlayStation, PS4, PS5 e DualSense são marcas da Sony Interactive Entertainment. Steam e Steam Deck são marcas da Valve Corporation. O Gordeck é um projeto independente, sem relação com a Sony ou a Valve, e não é endossado nem certificado por elas.</sub>
+<sub>PlayStation, PS4, PS5 and DualSense are trademarks of Sony Interactive Entertainment. Steam and Steam Deck are trademarks of Valve Corporation. Gordeck is an independent project, not affiliated with, endorsed by or certified by Sony or Valve.</sub>
