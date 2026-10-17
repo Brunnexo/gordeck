@@ -35,6 +35,30 @@ Dentro dos diálogos, use cima/baixo para mudar o foco, A para confirmar e B par
 
 > **Dica:** abra o Gordeck pela Steam (no modo Jogo ou como jogo não-Steam no modo Desktop). Fora da Steam, o controle embutido do Steam Deck não é reconhecido como controle.
 
+## Instalação no Steam Deck
+
+1. No modo Desktop, baixe e extraia o `Gordeck-Instalador.tar.gz`.
+2. Dê um duplo clique em **Instalar Gordeck** (ou rode `./install.sh`).
+3. Escolha **Instalar o Gordeck** e siga as instruções.
+
+O instalador gráfico baixa do Flathub os componentes do KDE que o Gordeck usa, instala o app, importa os consoles registrados do Chiaki4deck (se houver) e, se você quiser, **adiciona o Gordeck à biblioteca da Steam com ícone, capas, banner e logo**, pronto para o modo Jogo. O mesmo instalador atualiza e desinstala o Gordeck.
+
+Também é possível só adicionar à Steam um Gordeck já instalado:
+
+```bash
+python3 installer/add-to-steam.py
+```
+
+(feche a Steam antes; a Steam reescreve a lista de atalhos ao sair).
+
+### Gerar o pacote do instalador
+
+```bash
+./installer/build-package.sh
+```
+
+O pacote fica em `dist/Gordeck-Instalador.tar.gz`. As artes da Steam ficam em `installer/steam-art/` e são geradas por `installer/steam-art/generate.py`.
+
 ## Compilação e instalação (Flatpak)
 
 São necessários o `flatpak` e o [Flatpak Builder](https://flathub.org/apps/org.flatpak.Builder), além do SDK do KDE:

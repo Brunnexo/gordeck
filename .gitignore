@@ -35,3 +35,7 @@ site/
 # Flatpak builds
 build-dir/
 .flatpak-builder/
+
+# Installer package
+.flatpak-repo/
+dist/

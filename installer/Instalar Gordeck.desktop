@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Instalar Gordeck
+Name[en]=Install Gordeck
+Comment=Instala o Gordeck e adiciona à biblioteca da Steam
+Exec=bash -c 'cd "$(dirname "%k")" && ./install.sh'
+Icon=system-software-install
+Terminal=false
+Categories=Utility;

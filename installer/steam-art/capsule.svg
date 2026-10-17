@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#1d4fa8"/>
+    <stop offset="0.55" stop-color="#0b1a38"/>
+    <stop offset="1" stop-color="#050913"/>
+  </linearGradient>
+  <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#6cb4ff" stop-opacity="0"/>
+    <stop offset="0.5" stop-color="#6cb4ff" stop-opacity="0.16"/>
+    <stop offset="1" stop-color="#6cb4ff" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#1d4fa8"/>
+    <stop offset="0.6" stop-color="#0b1a38"/>
+    <stop offset="1" stop-color="#060b16"/>
+  </linearGradient>
+  <radialGradient id="tileglow" cx="256" cy="230" r="230" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#2f8cff" stop-opacity="0.55"/>
+    <stop offset="1" stop-color="#2f8cff" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="letter" x1="0" y1="96" x2="0" y2="416" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#ffffff"/>
+    <stop offset="1" stop-color="#b9c6dd"/>
+  </linearGradient>
+  <linearGradient id="play" x1="0" y1="186" x2="0" y2="326" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#8fd0ff"/>
+    <stop offset="1" stop-color="#2f8cff"/>
+  </linearGradient>
+  <linearGradient id="word" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffffff"/>
+    <stop offset="1" stop-color="#c9d6ee"/>
+  </linearGradient>
+</defs>
+
+<rect width="600" height="900" fill="url(#bg)"/>
+<radialGradient id="glow_600_900" cx="300.0" cy="360.0" r="540.0" gradientUnits="userSpaceOnUse">
+  <stop offset="0" stop-color="#2f8cff" stop-opacity="0.55"/>
+  <stop offset="1" stop-color="#2f8cff" stop-opacity="0"/>
+</radialGradient>
+<rect width="600" height="900" fill="url(#glow_600_900)"/>
+<g transform="rotate(-24 300.0 450.0)">
+  <rect x="-600" y="198.0" width="1800" height="63.00000000000001" fill="url(#beam)"/>
+  <rect x="-600" y="324.0" width="1800" height="22.5" fill="url(#beam)"/>
+  <rect x="-600" y="648.0" width="1800" height="45.0" fill="url(#beam)"/>
+</g>
+<g transform="translate(150 190) scale(0.5859375)"><rect x="16" y="16" width="480" height="480" rx="112" fill="url(#tile)"/><rect x="16" y="16" width="480" height="480" rx="112" fill="url(#tileglow)"/><rect x="17.5" y="17.5" width="477" height="477" rx="110.5" fill="none" stroke="#6cb4ff" stroke-opacity="0.35" stroke-width="3"/><path d="M 360.7 151.3 A 148 148 0 1 0 404 256 L 352 256" fill="none" stroke="url(#letter)" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/><path d="M 212 196 L 212 316 Q 212 330 224 323 L 300 263 Q 310 256 300 249 L 224 189 Q 212 182 212 196 Z" fill="url(#play)"/></g><text x="300" y="640" font-family="Noto Sans, DejaVu Sans, sans-serif" font-weight="900" font-size="92" letter-spacing="5.52" fill="url(#word)" text-anchor="middle">GORDECK</text><text x="300" y="705" font-family="Noto Sans, DejaVu Sans, sans-serif" font-weight="700" font-size="30" letter-spacing="5.3999999999999995" fill="#6cb4ff" text-anchor="middle">REMOTE PLAY</text></svg>

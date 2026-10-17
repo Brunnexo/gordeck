@@ -1,0 +1,21 @@
+GORDECK - INSTALADOR
+====================
+
+Como instalar no Steam Deck:
+
+1. Entre no modo Desktop (botão Steam > Ligar/desligar > Mudar para o modo Desktop).
+2. Extraia este arquivo em qualquer pasta (por exemplo, Downloads).
+3. Dê um duplo clique em "Instalar Gordeck".
+   Se o sistema perguntar, escolha "Executar" / "Continuar".
+   Também é possível rodar no terminal: ./install.sh
+4. Escolha "Instalar o Gordeck" e siga as instruções.
+
+O instalador:
+- baixa do Flathub os componentes do KDE que o Gordeck usa (só na primeira vez);
+- instala o Gordeck;
+- importa os consoles registrados do Chiaki4deck, se você usava;
+- adiciona o Gordeck à biblioteca da Steam com ícone e artes, para usar no modo Jogo.
+
+Para adicionar à Steam, o instalador precisa fechar a Steam por um momento.
+
+O mesmo instalador também atualiza, adiciona à Steam novamente ou desinstala o Gordeck.
