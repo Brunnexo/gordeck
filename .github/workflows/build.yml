@@ -18,7 +18,9 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # new pushes to a pull request replace its running build,
+  # builds of main and of tags always run to the end
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   native:
