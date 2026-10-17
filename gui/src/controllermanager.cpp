@@ -85,6 +85,12 @@ ControllerManager::ControllerManager(QObject *parent)
 {
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 	SDL_SetMainReady();
+#ifdef SDL_HINT_JOYSTICK_HIDAPI_STEAMDECK
+	// Never let SDL open the Steam Deck controller's raw HID node: the hid-steam kernel driver
+	// removes its evdev gamepad (the one we actually use) as soon as any process opens hidraw.
+	// Motion comes from the kernel's "Steam Deck Motion Sensors" evdev device through setsu.
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STEAMDECK, "0");
+#endif
 	if(SDL_Init(SDL_INIT_GAMECONTROLLER) < 0)
 	{
 		const char *err = SDL_GetError();
@@ -186,6 +192,12 @@ void ControllerManager::HandleEvents()
 			case SDL_CONTROLLERAXISMOTION:
 				ControllerEvent(event.caxis.which);
 				break;
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+			case SDL_CONTROLLERSENSORUPDATE:
+				if(open_controllers.contains(event.csensor.which))
+					open_controllers[event.csensor.which]->HandleSensorEvent(event.csensor);
+				break;
+#endif
 		}
 	}
 #endif
@@ -225,6 +237,8 @@ Controller::Controller(int device_id, ControllerManager *manager) : QObject(mana
 {
 	this->id = device_id;
 	this->manager = manager;
+	chiaki_orientation_tracker_init(&orient_tracker);
+	has_motion = false;
 
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 	controller = nullptr;
@@ -236,6 +250,15 @@ Controller::Controller(int device_id, ControllerManager *manager) : QObject(mana
 			break;
 		}
 	}
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+	if(controller)
+	{
+		if(SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL))
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_ACCEL, SDL_TRUE);
+		if(SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO))
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_GYRO, SDL_TRUE);
+	}
+#endif
 #endif
 }
 
@@ -252,6 +275,37 @@ void Controller::UpdateState()
 {
 	emit StateChanged();
 }
+
+#ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+void Controller::HandleSensorEvent(const SDL_ControllerSensorEvent &event)
+{
+	// SDL gives the accelerometer in m/s^2 and the gyroscope in rad/s, both already in the
+	// axis convention the PlayStation expects. The tracker keeps the last value of each.
+	uint32_t timestamp_us = event.timestamp * 1000;
+	switch(event.sensor)
+	{
+		case SDL_SENSOR_ACCEL:
+			chiaki_orientation_tracker_update(&orient_tracker,
+					orient_tracker.gyro_x, orient_tracker.gyro_y, orient_tracker.gyro_z,
+					event.data[0] / SDL_STANDARD_GRAVITY, event.data[1] / SDL_STANDARD_GRAVITY, event.data[2] / SDL_STANDARD_GRAVITY,
+					timestamp_us);
+			has_motion = true;
+			break;
+		case SDL_SENSOR_GYRO:
+			chiaki_orientation_tracker_update(&orient_tracker,
+					event.data[0], event.data[1], event.data[2],
+					orient_tracker.accel_x, orient_tracker.accel_y, orient_tracker.accel_z,
+					timestamp_us);
+			has_motion = true;
+			UpdateState(); // one feedback per gyro sample, accel samples ride along
+			break;
+		default:
+			break;
+	}
+}
+#endif
+#endif
 
 bool Controller::IsConnected()
 {
@@ -380,6 +434,8 @@ ChiakiControllerState Controller::GetState()
 	state.right_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX);
 	state.right_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY);
 
+	if(has_motion)
+		chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
 #endif
 	return state;
 }

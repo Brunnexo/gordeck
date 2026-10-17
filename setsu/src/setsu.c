@@ -180,7 +180,8 @@ static bool is_device_interesting(struct udev_device *dev, SetsuDeviceType *type
 		// vendor id, model id
 		0x054c,       0x05c4, // DualShock 4 Gen 1
 		0x054c,       0x09cc, // DualShock 4 Gen 2
-		0x54c,        0x0ce6 // DualSense
+		0x54c,        0x0ce6, // DualSense
+		0x28de,       0x1205  // Steam Deck: "Steam Deck Motion Sensors" evdev device of the hid-steam kernel driver
 	};
 
 	const char *touchpad_str = udev_device_get_property_value(dev, "ID_INPUT_TOUCHPAD");

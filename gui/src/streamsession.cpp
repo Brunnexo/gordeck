@@ -428,13 +428,22 @@ void StreamSession::UpdateGamepads()
 #endif
 }
 
+static void CopyMotion(ChiakiControllerState *dst, const ChiakiControllerState *src)
+{
+	dst->gyro_x = src->gyro_x; dst->gyro_y = src->gyro_y; dst->gyro_z = src->gyro_z;
+	dst->accel_x = src->accel_x; dst->accel_y = src->accel_y; dst->accel_z = src->accel_z;
+	dst->orient_x = src->orient_x; dst->orient_y = src->orient_y; dst->orient_z = src->orient_z; dst->orient_w = src->orient_w;
+}
+
 void StreamSession::SendFeedbackState()
 {
 	ChiakiControllerState state;
 	chiaki_controller_state_set_idle(&state);
 
+	// Motion (gyro, accel, orient) is not merged by chiaki_controller_state_or, so exactly one
+	// source provides it: setsu first (the Steam Deck's own sensors or a DualShock/DualSense,
+	// both seen as evdev motion devices), overridden by a controller exposing sensors via SDL.
 #if CHIAKI_GUI_ENABLE_SETSU
-	// setsu is the one that potentially has gyro/accel/orient so copy that directly first
 	state = setsu_state;
 #endif
 
@@ -442,6 +451,8 @@ void StreamSession::SendFeedbackState()
 	{
 		auto controller_state = controller->GetState();
 		chiaki_controller_state_or(&state, &state, &controller_state);
+		if(controller->HasMotion())
+			CopyMotion(&state, &controller_state);
 	}
 
 	chiaki_controller_state_or(&state, &state, &keyboard_state);

@@ -4,6 +4,7 @@
 #define CHIAKI_CONTROLLERMANAGER_H
 
 #include <chiaki/controller.h>
+#include <chiaki/orientation.h>
 
 #include <QObject>
 #include <QSet>
@@ -77,7 +78,13 @@ class Controller : public QObject
 
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 		SDL_GameController *controller;
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+		void HandleSensorEvent(const SDL_ControllerSensorEvent &event);
 #endif
+#endif
+		// gyro/accel of controllers that expose sensors through SDL (e.g. a DualSense on USB)
+		ChiakiOrientationTracker orient_tracker;
+		bool has_motion;
 
 	public:
 		~Controller();
@@ -93,6 +100,7 @@ class Controller : public QObject
 		ControllerLayout GetLayout();
 		ChiakiControllerState GetState();
 		void SetRumble(uint8_t left, uint8_t right);
+		bool HasMotion()	{ return has_motion; }
 
 	signals:
 		void StateChanged();
