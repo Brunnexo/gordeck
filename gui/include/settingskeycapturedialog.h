@@ -3,9 +3,9 @@
 #ifndef CHIAKI_SETTINGSKEYCAPTUREDIALOG_H
 #define CHIAKI_SETTINGSKEYCAPTUREDIALOG_H
 
-#include <QDialog>
+#include "moderndialog.h"
 
-class SettingsKeyCaptureDialog : public QDialog
+class SettingsKeyCaptureDialog : public ModernDialog
 {
 	Q_OBJECT
 
@@ -13,6 +13,7 @@ class SettingsKeyCaptureDialog : public QDialog
 		void KeyCaptured(Qt::Key);
 
 	protected:
+		void keyPressEvent(QKeyEvent *event) override;
 		void keyReleaseEvent(QKeyEvent *event) override;
 
 	public:

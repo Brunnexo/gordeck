@@ -2,6 +2,7 @@
 
 #include <gamepadnavigator.h>
 #include <controllermanager.h>
+#include <modernwidgets.h>
 
 #include <QAbstractButton>
 #include <QApplication>
@@ -14,6 +15,7 @@
 #include <QWidget>
 
 #include <algorithm>
+#include <cmath>
 
 #define STICK_THRESHOLD 20000
 #define REPEAT_DELAY_MS 380
@@ -37,9 +39,68 @@ GamepadNavigator::GamepadNavigator(QWidget *main_window)
 			this, &GamepadNavigator::UpdateControllers);
 	UpdateControllers();
 
+	// While suspended, the stream session owns the controllers. Dialogs shown during the stream
+	// (disconnect question, login PIN, errors) are still operated with the raw button presses.
+	connect(ControllerManager::GetInstance(), &ControllerManager::ButtonPressed, this, [this](int, uint32_t chiaki_button) {
+		if(!suspended || (!QApplication::activeModalWidget() && !QApplication::activePopupWidget()))
+			return;
+		GamepadButton button;
+		switch(chiaki_button)
+		{
+			case CHIAKI_CONTROLLER_BUTTON_DPAD_UP: button = GamepadButton::Up; break;
+			case CHIAKI_CONTROLLER_BUTTON_DPAD_DOWN: button = GamepadButton::Down; break;
+			case CHIAKI_CONTROLLER_BUTTON_DPAD_LEFT: button = GamepadButton::Left; break;
+			case CHIAKI_CONTROLLER_BUTTON_DPAD_RIGHT: button = GamepadButton::Right; break;
+			case CHIAKI_CONTROLLER_BUTTON_CROSS: button = GamepadButton::A; break;
+			case CHIAKI_CONTROLLER_BUTTON_MOON: button = GamepadButton::B; break;
+			case CHIAKI_CONTROLLER_BUTTON_BOX: button = GamepadButton::X; break;
+			case CHIAKI_CONTROLLER_BUTTON_PYRAMID: button = GamepadButton::Y; break;
+			case CHIAKI_CONTROLLER_BUTTON_L1: button = GamepadButton::L1; break;
+			case CHIAKI_CONTROLLER_BUTTON_R1: button = GamepadButton::R1; break;
+			default: return;
+		}
+		QMetaObject::invokeMethod(this, [this, button]() {
+			DispatchToPopupOrDialog(button);
+		}, Qt::QueuedConnection);
+	});
+
 	// left/right moves between the buttons of dialogs, also for keyboard input
 	// (e.g. Steam Input's desktop configuration maps the d-pad to the arrow keys)
 	qApp->installEventFilter(this);
+}
+
+/**
+ * Find the closest button in the given direction among the buttons of the same container
+ */
+static QAbstractButton *ButtonInDirection(QAbstractButton *from, int key)
+{
+	QWidget *container = from->parentWidget();
+	QPointF c = QRectF(from->geometry()).center();
+	QAbstractButton *best = nullptr;
+	qreal best_score = 0.0;
+	for(auto b : container->findChildren<QAbstractButton *>(QString(), Qt::FindDirectChildrenOnly))
+	{
+		if(b == from || !b->isVisible() || !b->isEnabled() || !(b->focusPolicy() & Qt::TabFocus))
+			continue;
+		QPointF d = QRectF(b->geometry()).center() - c;
+		qreal along, across;
+		switch(key)
+		{
+			case Qt::Key_Left: along = -d.x(); across = d.y(); break;
+			case Qt::Key_Right: along = d.x(); across = d.y(); break;
+			case Qt::Key_Up: along = -d.y(); across = d.x(); break;
+			default: along = d.y(); across = d.x(); break;
+		}
+		if(along < 1.0)
+			continue;
+		qreal score = along + 2.0 * std::abs(across);
+		if(!best || score < best_score)
+		{
+			best = b;
+			best_score = score;
+		}
+	}
+	return best;
 }
 
 bool GamepadNavigator::eventFilter(QObject *watched, QEvent *event)
@@ -48,13 +109,15 @@ bool GamepadNavigator::eventFilter(QObject *watched, QEvent *event)
 		return QObject::eventFilter(watched, event);
 	auto key_event = static_cast<QKeyEvent *>(event);
 	int key = key_event->key();
-	if(key != Qt::Key_Left && key != Qt::Key_Right)
+	bool horizontal = key == Qt::Key_Left || key == Qt::Key_Right;
+	bool vertical = key == Qt::Key_Up || key == Qt::Key_Down;
+	if(!(horizontal || vertical) || key_event->modifiers() & (Qt::ControlModifier | Qt::AltModifier))
 		return QObject::eventFilter(watched, event);
 
 	// left/right changes the value of combo boxes without opening them
 	if(auto combo = qobject_cast<QComboBox *>(watched))
 	{
-		if(combo->isEditable() || combo->count() == 0)
+		if(!horizontal || combo->isEditable() || combo->count() == 0)
 			return QObject::eventFilter(watched, event);
 		int index = combo->currentIndex() + (key == Qt::Key_Left ? -1 : 1);
 		if(index >= 0 && index < combo->count())
@@ -63,27 +126,28 @@ bool GamepadNavigator::eventFilter(QObject *watched, QEvent *event)
 	}
 
 	auto button = qobject_cast<QAbstractButton *>(watched);
-	if(!button)
-		return QObject::eventFilter(watched, event);
-	auto box = qobject_cast<QDialogButtonBox *>(button->parentWidget());
-	if(!box)
+	if(!button || !button->parentWidget())
 		return QObject::eventFilter(watched, event);
 
-	QList<QAbstractButton *> buttons;
-	for(auto b : box->buttons())
-	{
-		if(b->isVisible() && b->isEnabled())
-			buttons.append(b);
-	}
-	std::sort(buttons.begin(), buttons.end(), [](QAbstractButton *a, QAbstractButton *b) {
-		return a->x() < b->x();
-	});
-	int index = buttons.indexOf(button);
-	if(index < 0)
+	bool grid = ModernWidgets::HasGridNavigation(button);
+	bool button_box = qobject_cast<QDialogButtonBox *>(button->parentWidget()) != nullptr;
+	if(!grid && !(button_box && horizontal))
 		return QObject::eventFilter(watched, event);
-	index += key == Qt::Key_Left ? -1 : 1;
-	if(index >= 0 && index < buttons.count())
-		buttons[index]->setFocus(key == Qt::Key_Left ? Qt::BacktabFocusReason : Qt::TabFocusReason);
+
+	if(auto next = ButtonInDirection(button, key))
+	{
+		next->setFocus(key == Qt::Key_Left || key == Qt::Key_Up ? Qt::BacktabFocusReason : Qt::TabFocusReason);
+		return true;
+	}
+
+	// at the edge of the grid, up/down leaves it like tab
+	if(vertical)
+	{
+		QWidget *window = button->window();
+		QKeyEvent tab(QEvent::KeyPress, key == Qt::Key_Up ? Qt::Key_Backtab : Qt::Key_Tab,
+				key == Qt::Key_Up ? Qt::ShiftModifier : Qt::NoModifier);
+		QCoreApplication::sendEvent(window, &tab);
+	}
 	return true;
 }
 
@@ -316,10 +380,16 @@ bool GamepadNavigator::DispatchToPopupOrDialog(GamepadButton button)
 	switch(button)
 	{
 		case GamepadButton::Up:
-			SendKey(modal, Qt::Key_Backtab, Qt::ShiftModifier);
+			if(ModernWidgets::HasGridNavigation(focus))
+				SendKey(focus, Qt::Key_Up);
+			else
+				SendKey(modal, Qt::Key_Backtab, Qt::ShiftModifier);
 			break;
 		case GamepadButton::Down:
-			SendKey(modal, Qt::Key_Tab);
+			if(ModernWidgets::HasGridNavigation(focus))
+				SendKey(focus, Qt::Key_Down);
+			else
+				SendKey(modal, Qt::Key_Tab);
 			break;
 		case GamepadButton::L1:
 			// dialogs with categories (like the settings) switch them with Ctrl+Tab

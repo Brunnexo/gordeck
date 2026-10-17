@@ -3,7 +3,7 @@
 #include <controllermanager.h>
 
 #include <QCoreApplication>
-#include <QMessageBox>
+#include <moderndialog.h>
 #include <QByteArray>
 #include <QFile>
 #include <QTimer>
@@ -88,7 +88,8 @@ ControllerManager::ControllerManager(QObject *parent)
 	if(SDL_Init(SDL_INIT_GAMECONTROLLER) < 0)
 	{
 		const char *err = SDL_GetError();
-		QMessageBox::critical(nullptr, "SDL Init", tr("Failed to initialized SDL Gamecontroller: %1").arg(err ? err : ""));
+		ModernDialog::Message(nullptr, ModernDialog::Icon::Error, tr("Controllers unavailable"),
+				tr("Failed to initialized SDL Gamecontroller: %1").arg(err ? err : ""));
 	}
 
 	auto timer = new QTimer(this);
@@ -155,8 +156,31 @@ void ControllerManager::HandleEvents()
 			case SDL_JOYDEVICEREMOVED:
 				UpdateAvailableControllers();
 				break;
-			case SDL_CONTROLLERBUTTONUP:
 			case SDL_CONTROLLERBUTTONDOWN:
+			{
+				uint32_t chiaki_button = 0;
+				switch(event.cbutton.button)
+				{
+					case SDL_CONTROLLER_BUTTON_A: chiaki_button = CHIAKI_CONTROLLER_BUTTON_CROSS; break;
+					case SDL_CONTROLLER_BUTTON_B: chiaki_button = CHIAKI_CONTROLLER_BUTTON_MOON; break;
+					case SDL_CONTROLLER_BUTTON_X: chiaki_button = CHIAKI_CONTROLLER_BUTTON_BOX; break;
+					case SDL_CONTROLLER_BUTTON_Y: chiaki_button = CHIAKI_CONTROLLER_BUTTON_PYRAMID; break;
+					case SDL_CONTROLLER_BUTTON_DPAD_LEFT: chiaki_button = CHIAKI_CONTROLLER_BUTTON_DPAD_LEFT; break;
+					case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: chiaki_button = CHIAKI_CONTROLLER_BUTTON_DPAD_RIGHT; break;
+					case SDL_CONTROLLER_BUTTON_DPAD_UP: chiaki_button = CHIAKI_CONTROLLER_BUTTON_DPAD_UP; break;
+					case SDL_CONTROLLER_BUTTON_DPAD_DOWN: chiaki_button = CHIAKI_CONTROLLER_BUTTON_DPAD_DOWN; break;
+					case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: chiaki_button = CHIAKI_CONTROLLER_BUTTON_L1; break;
+					case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: chiaki_button = CHIAKI_CONTROLLER_BUTTON_R1; break;
+					case SDL_CONTROLLER_BUTTON_START: chiaki_button = CHIAKI_CONTROLLER_BUTTON_OPTIONS; break;
+					case SDL_CONTROLLER_BUTTON_BACK: chiaki_button = CHIAKI_CONTROLLER_BUTTON_SHARE; break;
+					default: break;
+				}
+				if(chiaki_button)
+					emit ButtonPressed(event.cbutton.which, chiaki_button);
+				ControllerEvent(event.cbutton.which);
+				break;
+			}
+			case SDL_CONTROLLERBUTTONUP:
 				ControllerEvent(event.cbutton.which);
 				break;
 			case SDL_CONTROLLERAXISMOTION:

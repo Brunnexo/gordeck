@@ -5,9 +5,10 @@
 #include <settingskeycapturedialog.h>
 #include <registdialog.h>
 #include <sessionlog.h>
-#include <confirmdialog.h>
+#include <moderndialog.h>
 #include <i18n.h>
 #include <theme.h>
+#include <modernwidgets.h>
 
 #include <QAbstractButton>
 #include <QApplication>
@@ -32,116 +33,8 @@
 #include <chiaki/config.h>
 #include <chiaki/ffmpegdecoder.h>
 
-#define CONTROL_HEIGHT 44
 
-static const char * const stylesheet = R"(
-QFrame#settingRow {
-	background-color: rgba(31, 42, 68, 150);
-	border: 2px solid transparent;
-	border-radius: 14px;
-}
 
-QFrame#settingRow[focused="true"] {
-	background-color: rgba(47, 140, 255, 38);
-	border-color: #2f8cff;
-}
-
-QPushButton#categoryButton {
-	text-align: left;
-	padding: 12px 18px;
-	border: none;
-	border-radius: 12px;
-	background: transparent;
-	font-size: 13pt;
-	color: #8e9bb4;
-}
-
-QPushButton#categoryButton:checked {
-	background-color: #2f8cff;
-	color: #ffffff;
-	font-weight: bold;
-}
-
-QPushButton#categoryButton:hover:!checked {
-	background-color: rgba(255, 255, 255, 18);
-}
-
-QComboBox, QLineEdit, QPushButton {
-	min-height: 28px;
-	font-size: 12pt;
-}
-
-QComboBox:focus, QLineEdit:focus, QPushButton:focus {
-	border: 2px solid #2f8cff;
-}
-)";
-
-/**
- * On/off switch, toggled with A/Space/click or set with left/right
- */
-class ToggleSwitch : public QAbstractButton
-{
-	public:
-		explicit ToggleSwitch(QWidget *parent = nullptr) : QAbstractButton(parent)
-		{
-			setCheckable(true);
-			setFocusPolicy(Qt::StrongFocus);
-			setCursor(Qt::PointingHandCursor);
-		}
-
-		QSize sizeHint() const override { return QSize(64, 34); }
-
-	protected:
-		void paintEvent(QPaintEvent *) override
-		{
-			QPainter painter(this);
-			painter.setRenderHint(QPainter::Antialiasing);
-			QRectF track = QRectF(rect()).adjusted(2, 2, -2, -2);
-			qreal radius = track.height() / 2.0;
-			painter.setPen(hasFocus() ? QPen(Theme::accent_light, 2.0) : QPen(QColor(0x2b, 0x38, 0x58), 1.5));
-			painter.setBrush(isChecked() ? Theme::accent : QColor(0x0c, 0x13, 0x22));
-			if(!isEnabled())
-				painter.setOpacity(0.4);
-			painter.drawRoundedRect(track, radius, radius);
-			qreal knob = track.height() - 8.0;
-			qreal x = isChecked() ? track.right() - 4.0 - knob : track.left() + 4.0;
-			painter.setPen(Qt::NoPen);
-			painter.setBrush(isChecked() ? QColor(Qt::white) : Theme::text_muted);
-			painter.drawEllipse(QRectF(x, track.top() + 4.0, knob, knob));
-		}
-
-		void keyPressEvent(QKeyEvent *event) override
-		{
-			if(event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
-			{
-				bool checked = event->key() == Qt::Key_Right;
-				if(checked != isChecked())
-					setChecked(checked);
-				return;
-			}
-			QAbstractButton::keyPressEvent(event);
-		}
-};
-
-static QFrame *FindRow(QWidget *widget)
-{
-	for(QWidget *w = widget; w; w = w->parentWidget())
-	{
-		if(w->objectName() == "settingRow")
-			return qobject_cast<QFrame *>(w);
-	}
-	return nullptr;
-}
-
-static void SetRowFocused(QWidget *widget, bool focused)
-{
-	QFrame *row = FindRow(widget);
-	if(!row || row->property("focused").toBool() == focused)
-		return;
-	row->setProperty("focused", focused);
-	row->style()->unpolish(row);
-	row->style()->polish(row);
-}
 
 static QIcon CategoryIcon(const QString &filename)
 {
@@ -158,7 +51,6 @@ SettingsDialog::SettingsDialog(Settings *settings, HintStyle hint_style, QWidget
 	hint_style(hint_style)
 {
 	setWindowTitle(tr("Settings"));
-	setStyleSheet(stylesheet);
 	resize(1280, 800);
 
 	auto root_layout = new QVBoxLayout(this);
@@ -492,24 +384,6 @@ SettingsDialog::SettingsDialog(Settings *settings, HintStyle hint_style, QWidget
 	});
 	connect(hint_back, &QAbstractButton::clicked, this, &QDialog::reject);
 
-	// highlight the row of the focused control
-	connect(qApp, &QApplication::focusChanged, this, [](QWidget *old, QWidget *now) {
-		if(old)
-			SetRowFocused(old, false);
-		if(now)
-		{
-			SetRowFocused(now, true);
-			for(QWidget *w = now; w; w = w->parentWidget())
-			{
-				if(auto scroll = qobject_cast<QScrollArea *>(w))
-				{
-					scroll->ensureWidgetVisible(now, 20, 60);
-					break;
-				}
-			}
-		}
-	});
-
 	UpdateRegisteredHosts();
 	connect(settings, &Settings::RegisteredHostsUpdated, this, &SettingsDialog::UpdateRegisteredHosts);
 
@@ -553,39 +427,7 @@ QVBoxLayout *SettingsDialog::AddPage(const QString &title, const QString &icon)
 
 QWidget *SettingsDialog::CreateRow(const QString &title, const QString &description, QWidget *control, int control_width)
 {
-	auto row = new QFrame(this);
-	row->setObjectName("settingRow");
-	row->setProperty("focused", false);
-
-	auto layout = new QHBoxLayout(row);
-	layout->setContentsMargins(20, 12, 16, 12);
-	layout->setSpacing(18);
-
-	auto text_layout = new QVBoxLayout();
-	text_layout->setSpacing(2);
-	auto title_label = new QLabel(title, row);
-	title_label->setStyleSheet("font-size: 13pt; color: #ecf1fa; background: transparent;");
-	text_layout->addWidget(title_label);
-	if(!description.isEmpty())
-	{
-		auto description_label = new QLabel(description, row);
-		description_label->setWordWrap(true);
-		description_label->setStyleSheet("font-size: 10.5pt; color: #8e9bb4; background: transparent;");
-		text_layout->addWidget(description_label);
-	}
-	layout->addLayout(text_layout, 1);
-
-	control->setParent(row);
-	if(dynamic_cast<ToggleSwitch *>(control))
-		control->setFixedSize(control->sizeHint());
-	else
-	{
-		control->setFixedWidth(control_width);
-		if(!qobject_cast<QLabel *>(control))
-			control->setMinimumHeight(CONTROL_HEIGHT);
-	}
-	layout->addWidget(control, 0, Qt::AlignVCenter | Qt::AlignRight);
-	return row;
+	return ModernWidgets::CreateRow(this, title, description, control, control_width);
 }
 
 int SettingsDialog::GetCurrentPage() const
@@ -751,7 +593,7 @@ void SettingsDialog::UpdateRegisteredHosts()
 		HostMAC mac = host.GetServerMAC();
 		QString nickname = host.GetServerNickname();
 		connect(delete_button, &QPushButton::clicked, this, [this, mac, nickname]() {
-			if(!ConfirmDialog::Ask(this, hint_style, tr("Delete registered Console"),
+			if(!ModernDialog::Confirm(this, tr("Delete registered Console"),
 					tr("Are you sure you want to delete the registered console %1 (ID %2)?").arg(nickname, mac.ToString()),
 					tr("Delete"), tr("Cancel"), true))
 				return;

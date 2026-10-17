@@ -3,22 +3,29 @@
 #ifndef CHIAKI_LOGINPINDIALOG_H
 #define CHIAKI_LOGINPINDIALOG_H
 
-#include <QDialog>
+#include "moderndialog.h"
 
-class QLineEdit;
-class QDialogButtonBox;
+class QLabel;
+class QPushButton;
 
-class LoginPINDialog : public QDialog
+/**
+ * Asks for the console's 4 digit login PIN with an on-screen number pad,
+ * so it can be entered with a gamepad as well.
+ */
+class LoginPINDialog : public ModernDialog
 {
 	Q_OBJECT
 
 	private:
 		QString pin;
 
-		QLineEdit *pin_edit;
-		QDialogButtonBox *button_box;
+		QLabel *pin_label;
+		QPushButton *ok_button;
 
-		void UpdateButtons();
+		void UpdatePIN();
+
+	protected:
+		void keyPressEvent(QKeyEvent *event) override;
 
 	public:
 		explicit LoginPINDialog(bool incorrect, QWidget *parent = nullptr);

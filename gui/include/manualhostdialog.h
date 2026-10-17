@@ -3,16 +3,14 @@
 #ifndef CHIAKI_MANUALHOSTDIALOG_H
 #define CHIAKI_MANUALHOSTDIALOG_H
 
-#include <QDialog>
+#include "moderndialog.h"
 
 class Settings;
-
 class QLineEdit;
 class QComboBox;
-class QDialogButtonBox;
-class QAbstractButton;
+class QPushButton;
 
-class ManualHostDialog: public QDialog
+class ManualHostDialog: public ModernDialog
 {
 	Q_OBJECT
 
@@ -22,12 +20,10 @@ class ManualHostDialog: public QDialog
 
 		QLineEdit *host_edit;
 		QComboBox *registered_host_combo_box;
-		QDialogButtonBox *button_box;
+		QPushButton *save_button;
 
 	private slots:
 		void ValidateInput();
-
-		void ButtonClicked(QAbstractButton *button);
 
 	public:
 		explicit ManualHostDialog(Settings *settings, int id, QWidget *parent = nullptr);

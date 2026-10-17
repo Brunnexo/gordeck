@@ -2,7 +2,7 @@
 
 #include <mainwindow.h>
 #include <consolecarousel.h>
-#include <confirmdialog.h>
+#include <moderndialog.h>
 #include <hintbar.h>
 #include <i18n.h>
 #include <settings.h>
@@ -21,8 +21,7 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLocale>
-#include <QMenu>
-#include <QMessageBox>
+#include <functional>
 #include <QPainter>
 #include <QPropertyAnimation>
 #include <QRadialGradient>
@@ -34,14 +33,6 @@
 #define CLOCK_INTERVAL_MS 10000
 #define PENDING_CONNECT_TIMEOUT_MS 90000
 
-static QIcon MenuIcon(const QString &filename)
-{
-	QIcon icon;
-	icon.addPixmap(Theme::RenderIcon(filename, 48, Theme::text, 1.0), QIcon::Normal);
-	icon.addPixmap(Theme::RenderIcon(filename, 48, Qt::white, 1.0), QIcon::Active);
-	icon.addPixmap(Theme::RenderIcon(filename, 48, QColor(0x5d, 0x6a, 0x82), 1.0), QIcon::Disabled);
-	return icon;
-}
 
 /**
  * Full window background with a subtle gradient and glow
@@ -481,6 +472,7 @@ void MainWindow::UpdateStatus()
 	}
 	hint_bar->SetStyle(style);
 	hint_style = style;
+	HintBar::SetGlobalStyle(style);
 
 	bool discovery = settings->GetDiscoveryEnabled();
 	discovery_icon_label->setPixmap(Theme::RenderIcon(discovery ? ":/icons/ui-search.svg" : ":/icons/ui-search-off.svg",
@@ -517,7 +509,7 @@ bool MainWindow::SendWakeup(const DisplayServer &server, bool show_toast)
 	}
 	catch(const Exception &e)
 	{
-		QMessageBox::critical(this, tr("Wakeup failed"), tr("Failed to send Wakeup packet:\n%1").arg(e.what()));
+		ModernDialog::Message(this, ModernDialog::Icon::Error, tr("Wakeup failed"), tr("Failed to send Wakeup packet:\n%1").arg(e.what()));
 		return false;
 	}
 
@@ -630,7 +622,7 @@ void MainWindow::DeleteManualHost(const DisplayServer &server)
 {
 	if(server.discovered)
 		return;
-	if(!ConfirmDialog::Ask(this, hint_style, tr("Delete Console"),
+	if(!ModernDialog::Confirm(this, tr("Delete Console"),
 			tr("Do you really want to remove the console %1 from the list?").arg(server.GetHostAddr()),
 			tr("Delete"), tr("Cancel"), true))
 		return;
@@ -644,36 +636,32 @@ void MainWindow::ShowOptionsMenu()
 
 void MainWindow::ShowContextMenu(int index, const QPoint &global_pos)
 {
+	Q_UNUSED(global_pos);
 	if(index < 0 || index >= display_servers.count())
 		return;
 	DisplayServer server = display_servers[index];
 
-	QMenu menu(this);
-
-	auto connect_action = menu.addAction(MenuIcon(server.registered ? ":/icons/ui-play.svg" : ":/icons/ui-key.svg"),
-			server.registered ? tr("Connect") : tr("Register Console"));
-	connect(connect_action, &QAction::triggered, this, [this, server]() { ConnectToServer(server); });
-
-	auto wake_action = menu.addAction(MenuIcon(":/icons/ui-power.svg"), tr("Send Wakeup Packet"));
-	wake_action->setEnabled(server.registered);
-	connect(wake_action, &QAction::triggered, this, [this, server]() { SendWakeup(server); });
-
+	QList<ModernDialog::MenuEntry> entries;
+	QList<std::function<void()>> actions;
+	entries.append({ server.registered ? ":/icons/ui-play.svg" : ":/icons/ui-key.svg",
+			server.registered ? tr("Connect") : tr("Register Console"), true });
+	actions.append([this, server]() { ConnectToServer(server); });
+	entries.append({ ":/icons/ui-power.svg", tr("Send Wakeup Packet"), server.registered });
+	actions.append([this, server]() { SendWakeup(server); });
 	if(!server.discovered)
 	{
-		menu.addSeparator();
-		auto edit_action = menu.addAction(MenuIcon(":/icons/ui-edit.svg"), tr("Edit Console"));
 		int id = server.manual_host.GetID();
-		connect(edit_action, &QAction::triggered, this, [this, id]() { EditManualHost(id); });
-
-		auto delete_action = menu.addAction(MenuIcon(":/icons/ui-delete.svg"), tr("Delete"));
-		connect(delete_action, &QAction::triggered, this, [this, server]() { DeleteManualHost(server); });
+		entries.append({ ":/icons/ui-edit.svg", tr("Edit Console"), true });
+		actions.append([this, id]() { EditManualHost(id); });
+		entries.append({ ":/icons/ui-delete.svg", tr("Delete"), true });
+		actions.append([this, server]() { DeleteManualHost(server); });
 	}
 
-	menu.setMinimumWidth(280);
-	// pre-select the first entry so the menu can be used right away with the gamepad
-	QTimer::singleShot(0, &menu, [&menu, connect_action]() { menu.setActiveAction(connect_action); });
-	QSize size = menu.sizeHint();
-	menu.exec(global_pos - QPoint(size.width() / 2, size.height() / 2));
+	QString title = server.discovered ? server.discovery_host.host_name
+		: (server.registered ? server.registered_host.GetServerNickname() : server.GetHostAddr());
+	int chosen = ModernDialog::Menu(this, title, tr("Options"), entries);
+	if(chosen >= 0 && chosen < actions.count())
+		actions[chosen]();
 }
 
 void MainWindow::ToggleDiscovery()
@@ -721,7 +709,7 @@ void MainWindow::ToggleFullscreen()
 
 void MainWindow::RequestQuit()
 {
-	if(ConfirmDialog::Ask(this, hint_style, tr("Quit"), tr("Do you want to quit Gordeck?"),
+	if(ModernDialog::Confirm(this, tr("Quit"), tr("Do you want to quit Gordeck?"),
 			tr("Quit"), tr("Cancel")))
 		Quit();
 }

@@ -7,8 +7,9 @@
 #include <settings.h>
 #include <i18n.h>
 
+#include <moderndialog.h>
+
 #include <QLabel>
-#include <QMessageBox>
 #include <QCoreApplication>
 #include <QAction>
 
@@ -31,7 +32,7 @@ StreamWindow::StreamWindow(const StreamSessionConnectInfo &connect_info, QWidget
 	}
 	catch(const Exception &e)
 	{
-		QMessageBox::critical(this, tr("Stream failed"), tr("Failed to initialize Stream Session: %1").arg(e.what()));
+		ModernDialog::Message(this, ModernDialog::Icon::Error, tr("Stream failed"), tr("Failed to initialize Stream Session: %1").arg(e.what()));
 		close();
 	}
 }
@@ -164,18 +165,19 @@ void StreamWindow::closeEvent(QCloseEvent *event)
 			switch(connect_info.settings->GetDisconnectAction())
 			{
 				case DisconnectAction::Ask: {
-					auto res = QMessageBox::question(this, tr("Disconnect Session"), tr("Do you want the Console to go into sleep mode?"),
-							QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+					int res = ModernDialog::Choice(this, ModernDialog::Icon::Question, tr("Disconnect Session"),
+							tr("Do you want the Console to go into sleep mode?"),
+							{ tr("Sleep Mode"), tr("Keep On"), tr("Cancel") }, 0);
 					switch(res)
 					{
-						case QMessageBox::Yes:
+						case 0:
 							sleep = true;
 							break;
-						case QMessageBox::Cancel:
+						case 1:
+							break;
+						default: // cancel or back
 							event->ignore();
 							return;
-						default:
-							break;
 					}
 					break;
 				}
@@ -196,10 +198,10 @@ void StreamWindow::SessionQuit(ChiakiQuitReason reason, const QString &reason_st
 {
 	if(reason != CHIAKI_QUIT_REASON_STOPPED)
 	{
-		QString m = tr("The stream session has quit") + ":\n" + I18n::QuitReasonString(reason);
+		QString m = I18n::QuitReasonString(reason);
 		if(!reason_str.isEmpty())
 			m += "\n" + tr("Reason") + ": \"" + reason_str + "\"";
-		QMessageBox::critical(this, tr("Session has quit"), m);
+		ModernDialog::Message(this, ModernDialog::Icon::Error, tr("The stream session has quit"), m);
 	}
 	close();
 }
@@ -217,6 +219,7 @@ void StreamWindow::LoginPINRequested(bool incorrect)
 	{
 		auto dialog = new LoginPINDialog(incorrect, this);
 		dialog->setAttribute(Qt::WA_DeleteOnClose);
+		dialog->setModal(true);
 		connect(dialog, &QDialog::finished, this, [this, dialog](int result) {
 			grabKeyboard();
 

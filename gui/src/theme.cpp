@@ -166,6 +166,46 @@ QMenu::separator {
 	margin: 6px 10px;
 }
 
+QFrame#settingRow {
+	background-color: rgba(31, 42, 68, 150);
+	border: 2px solid transparent;
+	border-radius: 14px;
+}
+
+QFrame#settingRow[focused="true"] {
+	background-color: rgba(47, 140, 255, 38);
+	border-color: #2f8cff;
+}
+
+QPushButton#categoryButton {
+	text-align: left;
+	padding: 12px 18px;
+	border: none;
+	border-radius: 12px;
+	background: transparent;
+	font-size: 13pt;
+	color: #8e9bb4;
+}
+
+QPushButton#categoryButton:checked {
+	background-color: #2f8cff;
+	color: #ffffff;
+	font-weight: bold;
+}
+
+QPushButton#categoryButton:hover:!checked {
+	background-color: rgba(255, 255, 255, 18);
+}
+
+QComboBox, QLineEdit, QPushButton {
+	min-height: 28px;
+	font-size: 12pt;
+}
+
+QComboBox:focus, QLineEdit:focus, QPushButton:focus {
+	border: 2px solid #2f8cff;
+}
+
 QScrollBar:vertical {
 	background: transparent;
 	width: 10px;

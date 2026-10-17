@@ -53,6 +53,12 @@ class ControllerManager : public QObject
 
 	signals:
 		void AvailableControllersUpdated();
+
+		/**
+		 * Emitted for every button press of any opened controller, no matter who opened it
+		 * @param chiaki_button ChiakiControllerButton
+		 */
+		void ButtonPressed(int device_id, uint32_t chiaki_button);
 };
 
 class Controller : public QObject

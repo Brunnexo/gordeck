@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
 
 #include <registdialog.h>
+#include <modernwidgets.h>
 #include <settings.h>
 
-#include <QFormLayout>
+#include <QComboBox>
+#include <QFontDatabase>
 #include <QLineEdit>
 #include <QRegularExpressionValidator>
-#include <QDialogButtonBox>
 #include <QPushButton>
 #include <QPlainTextEdit>
 #include <QScrollBar>
-#include <QMessageBox>
-#include <QCheckBox>
-#include <QRadioButton>
+#include <QVBoxLayout>
 
 Q_DECLARE_METATYPE(ChiakiLogLevel)
 
@@ -21,72 +20,60 @@ Q_DECLARE_METATYPE(ChiakiLogLevel)
 static const QRegularExpression pin_re(QString("[0-9]").repeated(PIN_LENGTH));
 
 RegistDialog::RegistDialog(Settings *settings, const QString &host, QWidget *parent)
-	: QDialog(parent),
+	: ModernDialog(tr("Register Console"), parent, Icon::None, 900),
 	settings(settings)
 {
-	setWindowTitle(tr("Register Console"));
+	SetText(tr("On the console, open Settings › System › Remote Play › Link Device to see the PIN."));
 
-	auto layout = new QVBoxLayout(this);
-	setLayout(layout);
+	auto content = GetContentLayout();
+	const int control_width = 340;
 
-	auto form_layout = new QFormLayout();
-	layout->addLayout(form_layout);
+	target_combo_box = new QComboBox(this);
+	target_combo_box->addItem(tr("PS5"), (int)CHIAKI_TARGET_PS5_1);
+	target_combo_box->addItem(tr("PS4 Firmware >= 8.0"), (int)CHIAKI_TARGET_PS4_10);
+	target_combo_box->addItem(tr("PS4 Firmware >= 7.0, < 8.0"), (int)CHIAKI_TARGET_PS4_9);
+	target_combo_box->addItem(tr("PS4 Firmware < 7.0"), (int)CHIAKI_TARGET_PS4_8);
+	content->addWidget(ModernWidgets::CreateRow(this, tr("Console"), QString(), target_combo_box, control_width));
 
 	host_edit = new QLineEdit(this);
-	form_layout->addRow(tr("Host:"), host_edit);
-	if(host.isEmpty())
-		host_edit->setText("255.255.255.255");
-	else
-		host_edit->setText(host);
+	host_edit->setText(host.isEmpty() ? "255.255.255.255" : host);
+	content->addWidget(ModernWidgets::CreateRow(this, tr("Host"), QString(), host_edit, control_width));
 
-	broadcast_check_box = new QCheckBox(this);
-	form_layout->addRow(tr("Broadcast:"), broadcast_check_box);
-	broadcast_check_box->setChecked(host.isEmpty());
+	broadcast_toggle = new ToggleSwitch(this);
+	broadcast_toggle->setChecked(host.isEmpty());
+	content->addWidget(ModernWidgets::CreateRow(this, tr("Broadcast"),
+				tr("Search for the console on the whole network."), broadcast_toggle));
+
+	psn_online_id_edit = new QLineEdit(this);
+	content->addWidget(ModernWidgets::CreateRow(this, tr("PSN Online-ID"),
+				tr("Only for PS4 firmware < 7.0. Case-sensitive."), psn_online_id_edit, control_width));
+
+	psn_account_id_edit = new QLineEdit(this);
+	content->addWidget(ModernWidgets::CreateRow(this, tr("PSN Account-ID"),
+				tr("In base64, see the psn-account-id tool."), psn_account_id_edit, control_width));
+
+	pin_edit = new QLineEdit(this);
+	pin_edit->setValidator(new QRegularExpressionValidator(pin_re, pin_edit));
+	pin_edit->setPlaceholderText("12345678");
+	content->addWidget(ModernWidgets::CreateRow(this, tr("PIN"), tr("8 digits shown on the console."), pin_edit, control_width));
 
 	auto UpdatePSNIDEdits = [this]() {
 		bool need_account_id = NeedAccountId();
 		psn_online_id_edit->setEnabled(!need_account_id);
 		psn_account_id_edit->setEnabled(need_account_id);
+		ValidateInput();
 	};
+	connect(target_combo_box, QOverload<int>::of(&QComboBox::currentIndexChanged), this, UpdatePSNIDEdits);
 
-	auto target_layout = new QVBoxLayout(nullptr);
-	ps4_pre9_radio_button = new QRadioButton(tr("PS4 Firmware < 7.0"), this);
-	target_layout->addWidget(ps4_pre9_radio_button);
-	connect(ps4_pre9_radio_button, &QRadioButton::toggled, this, UpdatePSNIDEdits);
-	ps4_pre10_radio_button = new QRadioButton(tr("PS4 Firmware >= 7.0, < 8.0"), this);
-	target_layout->addWidget(ps4_pre10_radio_button);
-	connect(ps4_pre10_radio_button, &QRadioButton::toggled, this, UpdatePSNIDEdits);
-	ps4_10_radio_button = new QRadioButton(tr("PS4 Firmware >= 8.0"), this);
-	target_layout->addWidget(ps4_10_radio_button);
-	connect(ps4_10_radio_button, &QRadioButton::toggled, this, UpdatePSNIDEdits);
-	ps5_radio_button = new QRadioButton(tr("PS5"), this);
-	target_layout->addWidget(ps5_radio_button);
-	connect(ps5_radio_button, &QRadioButton::toggled, this, UpdatePSNIDEdits);
-	form_layout->addRow(tr("Console:"), target_layout);
-
-	psn_online_id_edit = new QLineEdit(this);
-	form_layout->addRow(tr("PSN Online-ID (username, case-sensitive):"), psn_online_id_edit);
-	psn_account_id_edit = new QLineEdit(this);
-	form_layout->addRow(tr("PSN Account-ID (base64):"), psn_account_id_edit);
-
-	ps5_radio_button->setChecked(true);
-
-	UpdatePSNIDEdits();
-
-	pin_edit = new QLineEdit(this);
-	pin_edit->setValidator(new QRegularExpressionValidator(pin_re, pin_edit));
-	form_layout->addRow(tr("PIN:"), pin_edit);
-
-	button_box = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-	register_button = button_box->addButton(tr("Register"), QDialogButtonBox::AcceptRole);
-	layout->addWidget(button_box);
-	connect(button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	connect(button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+	register_button = AddButton(tr("Register"), ButtonRole::Accept);
+	AddButton(tr("Cancel"), ButtonRole::Reject);
+	SetInitialFocus(target_combo_box);
 
 	connect(host_edit, &QLineEdit::textChanged, this, &RegistDialog::ValidateInput);
 	connect(psn_online_id_edit, &QLineEdit::textChanged, this, &RegistDialog::ValidateInput);
+	connect(psn_account_id_edit, &QLineEdit::textChanged, this, &RegistDialog::ValidateInput);
 	connect(pin_edit, &QLineEdit::textChanged, this, &RegistDialog::ValidateInput);
-	ValidateInput();
+	UpdatePSNIDEdits();
 }
 
 RegistDialog::~RegistDialog()
@@ -95,7 +82,7 @@ RegistDialog::~RegistDialog()
 
 bool RegistDialog::NeedAccountId()
 {
-	return !ps4_pre9_radio_button->isChecked();
+	return target_combo_box->currentData().toInt() != (int)CHIAKI_TARGET_PS4_8;
 }
 
 void RegistDialog::ValidateInput()
@@ -114,14 +101,7 @@ void RegistDialog::accept()
 	QByteArray host = host_edit->text().trimmed().toUtf8();
 	info.host = host.constData();
 
-	if(ps4_pre9_radio_button->isChecked())
-		info.target = CHIAKI_TARGET_PS4_8;
-	else if(ps4_pre10_radio_button->isChecked())
-		info.target = CHIAKI_TARGET_PS4_9;
-	else if(ps4_10_radio_button->isChecked())
-		info.target = CHIAKI_TARGET_PS4_10;
-	else
-		info.target = CHIAKI_TARGET_PS5_1;
+	info.target = (ChiakiTarget)target_combo_box->currentData().toInt();
 
 	bool need_account_id = NeedAccountId();
 	QByteArray psn_id; // keep this out of the if scope
@@ -136,14 +116,14 @@ void RegistDialog::accept()
 		QByteArray account_id = QByteArray::fromBase64(account_id_b64.toUtf8());
 		if(account_id.size() != CHIAKI_PSN_ACCOUNT_ID_SIZE)
 		{
-			QMessageBox::critical(this, tr("Invalid Account-ID"), tr("The PSN Account-ID must be exactly %1 bytes encoded as base64.").arg(CHIAKI_PSN_ACCOUNT_ID_SIZE));
+			ModernDialog::Message(this, Icon::Error, tr("Invalid Account-ID"), tr("The PSN Account-ID must be exactly %1 bytes encoded as base64.").arg(CHIAKI_PSN_ACCOUNT_ID_SIZE));
 			return;
 		}
 		info.psn_online_id = nullptr;
 		memcpy(info.psn_account_id, account_id.constData(), CHIAKI_PSN_ACCOUNT_ID_SIZE);
 	}
 
-	info.broadcast = broadcast_check_box->isChecked();
+	info.broadcast = broadcast_toggle->isChecked();
 	info.pin = (uint32_t)pin_edit->text().toULong();
 
 	RegistExecuteDialog execute_dialog(settings, info, this);
@@ -159,27 +139,24 @@ static void RegistExecuteDialogLogCb(ChiakiLogLevel level, const char *msg, void
 static void RegistExecuteDialogRegistCb(ChiakiRegistEvent *event, void *user);
 
 RegistExecuteDialog::RegistExecuteDialog(Settings *settings, const ChiakiRegistInfo &regist_info, QWidget *parent)
-	: QDialog(parent)
+	: ModernDialog(tr("Register Console"), parent, Icon::None, 760),
+	finished(false)
 {
 	this->settings = settings;
 
-	auto layout = new QVBoxLayout(this);
-	setLayout(layout);
+	SetText(tr("Registering, this can take a few seconds…"));
 
 	log_edit = new QPlainTextEdit(this);
 	log_edit->setReadOnly(true);
+	log_edit->setFocusPolicy(Qt::NoFocus);
 	log_edit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-	layout->addWidget(log_edit);
+	log_edit->setMinimumHeight(260);
+	GetContentLayout()->addWidget(log_edit);
 
-	button_box = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-	layout->addWidget(button_box);
-	connect(button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+	cancel_button = AddButton(tr("Cancel"), ButtonRole::Reject);
 
 	chiaki_log_init(&log, settings->GetLogLevelMask(), RegistExecuteDialogLogCb, this);
 	chiaki_regist_start(&regist, &log, &regist_info, RegistExecuteDialogRegistCb, this);
-
-	setWindowTitle(tr("Register Console"));
-	resize(600, 400);
 }
 
 RegistExecuteDialog::~RegistExecuteDialog()
@@ -196,11 +173,11 @@ void RegistExecuteDialog::Log(ChiakiLogLevel level, QString msg)
 
 void RegistExecuteDialog::Finished()
 {
-	auto cancel_button = button_box->button(QDialogButtonBox::Cancel);
-	if(!cancel_button)
+	if(finished)
 		return;
-	button_box->removeButton(cancel_button);
-	button_box->addButton(QDialogButtonBox::Close);
+	finished = true;
+	SetText(tr("Registration failed. Check the log below, the PIN and the console's address."));
+	cancel_button->setText(tr("Close"));
 }
 
 void RegistExecuteDialog::Success(RegisteredHost host)
@@ -210,10 +187,11 @@ void RegistExecuteDialog::Success(RegisteredHost host)
 
 	if(settings->GetRegisteredHostRegistered(host.GetServerMAC()))
 	{
-		int r = QMessageBox::question(this,
+		bool overwrite = ModernDialog::Confirm(this,
 				tr("Console already registered"),
-				tr("The console with ID %1 has already been registered. Should the previous record be overwritten?").arg(host.GetServerMAC().ToString()));
-		if(r == QMessageBox::No)
+				tr("The console with ID %1 has already been registered. Should the previous record be overwritten?").arg(host.GetServerMAC().ToString()),
+				tr("Overwrite"), tr("Keep Previous"));
+		if(!overwrite)
 		{
 			accept();
 			return;
@@ -222,7 +200,7 @@ void RegistExecuteDialog::Success(RegisteredHost host)
 
 	settings->AddRegisteredHost(host);
 
-	QMessageBox::information(this, tr("Console registered"), tr("The Console %1 with ID %2 has been successfully registered!").arg(host.GetServerNickname(), host.GetServerMAC().ToString()));
+	ModernDialog::Message(this, Icon::Success, tr("Console registered"), tr("The Console %1 with ID %2 has been successfully registered!").arg(host.GetServerNickname(), host.GetServerMAC().ToString()));
 
 	accept();
 }

@@ -21,6 +21,11 @@
     <file>ui-keyboard.svg</file>
     <file>ui-info.svg</file>
     <file>ui-chevron-down.svg</file>
+    <file>ui-error.svg</file>
+    <file>ui-warning.svg</file>
+    <file>ui-help.svg</file>
+    <file>ui-check.svg</file>
+    <file>ui-backspace.svg</file>
     <file>ui-search-off.svg</file>
   </qresource>
 </RCC>

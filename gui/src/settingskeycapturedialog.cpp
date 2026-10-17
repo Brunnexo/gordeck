@@ -2,29 +2,28 @@
 
 #include "settingskeycapturedialog.h"
 
-#include <QLabel>
-#include <QPushButton>
-#include <QVBoxLayout>
 #include <QKeyEvent>
+#include <QPushButton>
 
 SettingsKeyCaptureDialog::SettingsKeyCaptureDialog(QWidget *parent)
+	: ModernDialog(tr("Key Capture"), parent, Icon::Info)
 {
-	setWindowTitle(tr("Key Capture"));
+	SetText(tr("Press any key on the keyboard to configure the button."));
+	auto button = AddButton(tr("Cancel"), ButtonRole::Reject);
+	// keyboard keys must not activate the button, every key is captured
+	button->setFocusPolicy(Qt::NoFocus);
+}
 
-	auto root_layout = new QVBoxLayout(this);
-	setLayout(root_layout);
-
-	auto label = new QLabel(tr("Press any key to configure button or click close."));
-	root_layout->addWidget(label);
-
-	auto button = new QPushButton(tr("Close"), this);
-	root_layout->addWidget(button);
-	button->setAutoDefault(false);
-	connect(button, &QPushButton::clicked, this, &QDialog::accept);
+void SettingsKeyCaptureDialog::keyPressEvent(QKeyEvent *event)
+{
+	// handled on release, don't let the dialog close on Escape or Enter
+	event->accept();
 }
 
 void SettingsKeyCaptureDialog::keyReleaseEvent(QKeyEvent *event)
 {
-	KeyCaptured(Qt::Key(event->key()));
+	if(event->isAutoRepeat())
+		return;
+	emit KeyCaptured(Qt::Key(event->key()));
 	accept();
 }

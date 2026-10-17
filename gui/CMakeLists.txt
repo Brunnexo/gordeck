@@ -46,8 +46,10 @@ add_executable(gordeck WIN32
 		src/consolecarousel.cpp
 		include/hintbar.h
 		src/hintbar.cpp
-		include/confirmdialog.h
-		src/confirmdialog.cpp
+		include/moderndialog.h
+		src/moderndialog.cpp
+		include/modernwidgets.h
+		src/modernwidgets.cpp
 		include/gamepadnavigator.h
 		src/gamepadnavigator.cpp
 		include/i18n.h

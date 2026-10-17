@@ -79,6 +79,12 @@ class HintBar : public QWidget
 		HintButton *AddHint(HintGlyph glyph, const QString &key_text);
 		void AddStretch();
 		void SetStyle(HintStyle style);
+
+		/**
+		 * Style of the controller that is currently used, applied to new hint bars
+		 */
+		static HintStyle GetGlobalStyle();
+		static void SetGlobalStyle(HintStyle style);
 };
 
 #endif // CHIAKI_HINTBAR_H

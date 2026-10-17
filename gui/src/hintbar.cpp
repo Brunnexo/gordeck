@@ -323,6 +323,18 @@ void HintButton::paintEvent(QPaintEvent *)
 	painter.drawText(text_rect, Qt::AlignVCenter | Qt::AlignLeft, text());
 }
 
+static HintStyle global_style = HintStyle::Keyboard;
+
+HintStyle HintBar::GetGlobalStyle()
+{
+	return global_style;
+}
+
+void HintBar::SetGlobalStyle(HintStyle style)
+{
+	global_style = style;
+}
+
 HintBar::HintBar(QWidget *parent) : QWidget(parent)
 {
 	layout = new QHBoxLayout(this);
@@ -334,6 +346,7 @@ HintBar::HintBar(QWidget *parent) : QWidget(parent)
 HintButton *HintBar::AddHint(HintGlyph glyph, const QString &key_text)
 {
 	auto button = new HintButton(glyph, key_text, this);
+	button->SetStyle(global_style);
 	layout->addWidget(button);
 	buttons.append(button);
 	return button;

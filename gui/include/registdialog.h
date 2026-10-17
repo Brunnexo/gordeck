@@ -7,17 +7,17 @@
 
 #include "host.h"
 
-#include <QDialog>
+#include "moderndialog.h"
 
 class Settings;
 
+class QAbstractButton;
+class QComboBox;
 class QLineEdit;
 class QPlainTextEdit;
-class QDialogButtonBox;
-class QCheckBox;
-class QRadioButton;
+class QPushButton;
 
-class RegistDialog : public QDialog
+class RegistDialog : public ModernDialog
 {
 	Q_OBJECT
 
@@ -25,15 +25,11 @@ class RegistDialog : public QDialog
 		Settings *settings;
 
 		QLineEdit *host_edit;
-		QCheckBox *broadcast_check_box;
-		QRadioButton *ps4_pre9_radio_button;
-		QRadioButton *ps4_pre10_radio_button;
-		QRadioButton *ps4_10_radio_button;
-		QRadioButton *ps5_radio_button;
+		QAbstractButton *broadcast_toggle;
+		QComboBox *target_combo_box;
 		QLineEdit *psn_online_id_edit;
 		QLineEdit *psn_account_id_edit;
 		QLineEdit *pin_edit;
-		QDialogButtonBox *button_box;
 		QPushButton *register_button;
 
 		RegisteredHost registered_host;
@@ -53,7 +49,7 @@ class RegistDialog : public QDialog
 		void accept() override;
 };
 
-class RegistExecuteDialog: public QDialog
+class RegistExecuteDialog: public ModernDialog
 {
 	Q_OBJECT
 
@@ -66,7 +62,8 @@ class RegistExecuteDialog: public QDialog
 		ChiakiRegist regist;
 
 		QPlainTextEdit *log_edit;
-		QDialogButtonBox *button_box;
+		QPushButton *cancel_button;
+		bool finished;
 
 		RegisteredHost registered_host;
 

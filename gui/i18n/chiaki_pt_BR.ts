@@ -9,17 +9,6 @@
     </message>
 </context>
 <context>
-    <name>ConfirmDialog</name>
-    <message>
-        <source>Select</source>
-        <translation>Selecionar</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Voltar</translation>
-    </message>
-</context>
-<context>
     <name>ConsoleCarousel</name>
     <message>
         <source>Manual</source>
@@ -31,6 +20,10 @@
     <message>
         <source>Failed to initialized SDL Gamecontroller: %1</source>
         <translation>Falha ao inicializar o controle via SDL: %1</translation>
+    </message>
+    <message>
+        <source>Controllers unavailable</source>
+        <translation>Controles indisponíveis</translation>
     </message>
 </context>
 <context>
@@ -186,8 +179,16 @@
         <translation>O PIN informado está incorreto!</translation>
     </message>
     <message>
-        <source>Login PIN</source>
-        <translation>PIN de acesso</translation>
+        <source>Enter the login PIN of your PlayStation user.</source>
+        <translation>Digite o PIN de acesso do seu usuário do PlayStation.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
     </message>
 </context>
 <context>
@@ -386,16 +387,47 @@
         <translation>Adicionar console manualmente</translation>
     </message>
     <message>
-        <source>Host:</source>
-        <translation>Host:</translation>
-    </message>
-    <message>
         <source>Register on first Connection</source>
         <translation>Registrar na primeira conexão</translation>
     </message>
     <message>
-        <source>Registered Console:</source>
-        <translation>Console registrado:</translation>
+        <source>Enter the IP address or host name of the console.</source>
+        <translation>Informe o endereço IP ou o nome do host do console.</translation>
+    </message>
+    <message>
+        <source>Host</source>
+        <translation>Host</translation>
+    </message>
+    <message>
+        <source>Registered Console</source>
+        <translation>Console registrado</translation>
+    </message>
+    <message>
+        <source>Use the registration of a console that was already registered.</source>
+        <translation>Usar o registro de um console que já foi registrado.</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Salvar</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+</context>
+<context>
+    <name>ModernDialog</name>
+    <message>
+        <source>Select</source>
+        <translation>Selecionar</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Voltar</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
     </message>
 </context>
 <context>
@@ -403,14 +435,6 @@
     <message>
         <source>Register Console</source>
         <translation>Registrar console</translation>
-    </message>
-    <message>
-        <source>Host:</source>
-        <translation>Host:</translation>
-    </message>
-    <message>
-        <source>Broadcast:</source>
-        <translation>Broadcast:</translation>
     </message>
     <message>
         <source>PS4 Firmware &lt; 7.0</source>
@@ -429,22 +453,6 @@
         <translation>PS5</translation>
     </message>
     <message>
-        <source>Console:</source>
-        <translation>Console:</translation>
-    </message>
-    <message>
-        <source>PSN Online-ID (username, case-sensitive):</source>
-        <translation>ID Online da PSN (nome de usuário, diferencia maiúsculas):</translation>
-    </message>
-    <message>
-        <source>PSN Account-ID (base64):</source>
-        <translation>ID da conta PSN (base64):</translation>
-    </message>
-    <message>
-        <source>PIN:</source>
-        <translation>PIN:</translation>
-    </message>
-    <message>
         <source>Register</source>
         <translation>Registrar</translation>
     </message>
@@ -455,6 +463,54 @@
     <message>
         <source>The PSN Account-ID must be exactly %1 bytes encoded as base64.</source>
         <translation>O ID da conta PSN deve ter exatamente %1 bytes codificados em base64.</translation>
+    </message>
+    <message>
+        <source>On the console, open Settings › System › Remote Play › Link Device to see the PIN.</source>
+        <translation>No console, abra Configurações › Sistema › Reprodução Remota › Vincular dispositivo para ver o PIN.</translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation>Console</translation>
+    </message>
+    <message>
+        <source>Host</source>
+        <translation>Host</translation>
+    </message>
+    <message>
+        <source>Broadcast</source>
+        <translation>Broadcast</translation>
+    </message>
+    <message>
+        <source>Search for the console on the whole network.</source>
+        <translation>Procurar o console em toda a rede.</translation>
+    </message>
+    <message>
+        <source>PSN Online-ID</source>
+        <translation>ID Online da PSN</translation>
+    </message>
+    <message>
+        <source>PSN Account-ID</source>
+        <translation>ID da conta PSN</translation>
+    </message>
+    <message>
+        <source>PIN</source>
+        <translation>PIN</translation>
+    </message>
+    <message>
+        <source>8 digits shown on the console.</source>
+        <translation>8 dígitos exibidos no console.</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Only for PS4 firmware &lt; 7.0. Case-sensitive.</source>
+        <translation>Só para PS4 com firmware &lt; 7.0. Diferencia maiúsculas.</translation>
+    </message>
+    <message>
+        <source>In base64, see the psn-account-id tool.</source>
+        <translation>Em base64, veja a ferramenta psn-account-id.</translation>
     </message>
 </context>
 <context>
@@ -478,6 +534,30 @@
     <message>
         <source>The Console %1 with ID %2 has been successfully registered!</source>
         <translation>O console %1 com ID %2 foi registrado com sucesso!</translation>
+    </message>
+    <message>
+        <source>Registering, this can take a few seconds…</source>
+        <translation>Registrando, isso pode levar alguns segundos…</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Registration failed. Check the log below, the PIN and the console&apos;s address.</source>
+        <translation>O registro falhou. Confira o log abaixo, o PIN e o endereço do console.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Fechar</translation>
+    </message>
+    <message>
+        <source>Overwrite</source>
+        <translation>Substituir</translation>
+    </message>
+    <message>
+        <source>Keep Previous</source>
+        <translation>Manter anterior</translation>
     </message>
 </context>
 <context>
@@ -829,12 +909,12 @@
         <translation>Capturar tecla</translation>
     </message>
     <message>
-        <source>Press any key to configure button or click close.</source>
-        <translation>Pressione uma tecla para configurar o botão ou clique em Fechar.</translation>
+        <source>Press any key on the keyboard to configure the button.</source>
+        <translation>Pressione uma tecla do teclado para configurar o botão.</translation>
     </message>
     <message>
-        <source>Close</source>
-        <translation>Fechar</translation>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
     </message>
 </context>
 <context>
@@ -907,12 +987,20 @@
         <translation>Motivo</translation>
     </message>
     <message>
-        <source>Session has quit</source>
-        <translation>Sessão encerrada</translation>
-    </message>
-    <message>
         <source>The stream session has quit</source>
         <translation>A sessão de transmissão foi encerrada</translation>
+    </message>
+    <message>
+        <source>Sleep Mode</source>
+        <translation>Modo de repouso</translation>
+    </message>
+    <message>
+        <source>Keep On</source>
+        <translation>Manter ligado</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
     </message>
 </context>
 </TS>
