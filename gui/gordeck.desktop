@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Gordeck
+Comment=PlayStation Remote Play Client
+Comment[pt_BR]=Cliente de Remote Play para PlayStation
+Exec=gordeck
+Icon=gordeck
+Categories=Game;

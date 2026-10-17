@@ -1,0 +1,32 @@
+module(
+    name = "nanopb",
+    version = "0.4.9",
+    # protobuf 35.x, which now provides the Bazel proto rules, requires Bazel 8.
+    # See docs/migration.md: "Bazel: Bazel 8 now required, WORKSPACE support removed".
+    bazel_compatibility = [">=8.0.0"],
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "rules_python", version = "1.7.0")
+bazel_dep(name = "protobuf", version = "35.1")
+
+# Used when --incompatible_enable_proto_toolchain_resolution is enabled.
+register_toolchains("//:nanopb_proto_toolchain_toolchain")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+
+PYTHON_VERSION = "3.11"
+
+# No need for this since rules_python already creates our version.
+# python.toolchain(python_version = PYTHON_VERSION)
+use_repo(python, "python_versions")
+
+use_repo(pip, "nanopb_pypi")
+pip.parse(
+    hub_name = "nanopb_pypi",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "@nanopb//:extra/requirements_lock.txt",
+)

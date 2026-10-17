@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>com.bnx.gordeck</id>
+  <launchable type="desktop-id">com.bnx.gordeck.desktop</launchable>
+  <name>Gordeck</name>
+  <summary>Free and Open Source Client for PlayStation Remote Play for the Steam Deck, based on chiaki4deck</summary>
+  <summary xml:lang="pt_BR">Cliente livre e de código aberto de Remote Play para PlayStation no Steam Deck, baseado no chiaki4deck</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+  <developer_name>Street Pea</developer_name>
+  <url type="homepage">https://streetpea.github.io/chiaki4deck</url>
+  <url type="help">https://github.com/streetpea/chiaki4deck/issues</url>
+  <description>
+    <p>
+      Chiaki is a Free and Open Source Client for PlayStation 4 and PlayStation 5 Remote Play. It can be used to play in real time on a PlayStation as long as there is a network connection.
+    </p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://git.sr.ht/~thestr4ng3r/chiaki/blob/refs/heads/master/assets/screenshot.png</image>
+    </screenshot>
+  </screenshots>
+  <update_contact>streetpea@proton.me</update_contact>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release date="2022-08-21" version="1.2.0" />
+  </releases>
