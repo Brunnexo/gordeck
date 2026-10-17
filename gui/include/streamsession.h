@@ -62,8 +62,8 @@ struct StreamSessionConnectInfo
 };
 
 // holding the PS/home button this long force-quits the stream
-// (some controllers turn off when the button is held for about 20 s)
-#define HOME_HOLD_QUIT_MS 10000
+// (some controllers, like the DualSense, turn off when the button is held for about 10 s)
+#define HOME_HOLD_QUIT_MS 7000
 
 class StreamSession : public QObject
 {
