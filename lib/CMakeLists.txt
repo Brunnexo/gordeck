@@ -20,6 +20,7 @@ set(HEADER_FILES
 		include/chiaki/audioreceiver.h
 		include/chiaki/video.h
 		include/chiaki/videoreceiver.h
+		include/chiaki/bitstream.h
 		include/chiaki/frameprocessor.h
 		include/chiaki/packetstats.h
 		include/chiaki/seqnum.h
@@ -60,6 +61,8 @@ set(SOURCE_FILES
 		src/audio.c
 		src/audioreceiver.c
 		src/videoreceiver.c
+		src/bitstream.c
+		src/vl_rbsp.h
 		src/frameprocessor.c
 		src/packetstats.c
 		src/discovery.c

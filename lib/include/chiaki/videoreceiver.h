@@ -8,12 +8,15 @@
 #include "video.h"
 #include "takion.h"
 #include "frameprocessor.h"
+#include "bitstream.h"
+#include "thread.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define CHIAKI_VIDEO_PROFILES_MAX 8
+#define CHIAKI_VIDEO_REFERENCE_FRAMES_MAX 16
 
 typedef struct chiaki_video_receiver_t
 {
@@ -28,6 +31,22 @@ typedef struct chiaki_video_receiver_t
 	int32_t frame_index_prev_complete; // last frame that has been completely decoded
 	ChiakiFrameProcessor frame_processor;
 	ChiakiPacketStats *packet_stats;
+
+	// Frames that were handed to the decoder successfully, newest first (-1 = empty slot).
+	// A P-frame may only be decoded if the frame it references is in this list.
+	int32_t reference_frames[CHIAKI_VIDEO_REFERENCE_FRAMES_MAX];
+	ChiakiBitstream bitstream;
+	bool bitstream_header_ok;
+
+	// After an unrecoverable loss we ask the console for an IDR (keyframe) and drop
+	// every P-frame until it arrives, instead of feeding the decoder frames whose
+	// references are missing (which is what shows up as macroblocking).
+	ChiakiMutex waiting_for_idr_mutex;
+	bool waiting_for_idr;
+
+	ChiakiMutex frames_lost_mutex;
+	int32_t frames_lost; // since the last frame handed to the decoder
+	int32_t frames_lost_total;
 } ChiakiVideoReceiver;
 
 CHIAKI_EXPORT void chiaki_video_receiver_init(ChiakiVideoReceiver *video_receiver, struct chiaki_session_t *session, ChiakiPacketStats *packet_stats);
@@ -43,6 +62,9 @@ CHIAKI_EXPORT void chiaki_video_receiver_fini(ChiakiVideoReceiver *video_receive
 CHIAKI_EXPORT void chiaki_video_receiver_stream_info(ChiakiVideoReceiver *video_receiver, ChiakiVideoProfile *profiles, size_t profiles_count);
 
 CHIAKI_EXPORT void chiaki_video_receiver_av_packet(ChiakiVideoReceiver *video_receiver, ChiakiTakionAVPacket *packet);
+CHIAKI_EXPORT void chiaki_video_receiver_set_waiting_for_idr(ChiakiVideoReceiver *video_receiver, bool waiting_for_idr);
+CHIAKI_EXPORT bool chiaki_video_receiver_get_waiting_for_idr(ChiakiVideoReceiver *video_receiver);
+CHIAKI_EXPORT int32_t chiaki_video_receiver_get_frames_lost_total(ChiakiVideoReceiver *video_receiver);
 
 static inline ChiakiVideoReceiver *chiaki_video_receiver_new(struct chiaki_session_t *session, ChiakiPacketStats *packet_stats)
 {
