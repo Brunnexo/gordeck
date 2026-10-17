@@ -15,7 +15,7 @@
 O **Gordeck** transmite os jogos do seu **PS5 ou PS4** para o **Steam Deck** pela rede de casa, com imagem, som e controle, como se você estivesse na frente da TV. Gratuito, de código aberto e feito para ser usado só com o controle: abriu, escolheu o console, apertou **A** e está jogando.
 
 <p align="center">
-  <img src="assets/screenshots/tela-principal.png" width="80%" alt="Tela principal do Gordeck">
+  <img src="assets/capturas/tela-principal.png" width="80%" alt="Tela principal do Gordeck">
 </p>
 
 ## Por que o Gordeck
@@ -35,8 +35,8 @@ O **Gordeck** transmite os jogos do seu **PS5 ou PS4** para o **Steam Deck** pel
 📚 **Direto na biblioteca da Steam.** O instalador adiciona o Gordeck à Steam com ícone, capas e banner, pronto para abrir no modo Jogo.
 
 <p align="center">
-  <img src="assets/screenshots/configuracoes.png" width="49%" alt="Configurações">
-  <img src="assets/screenshots/opcoes.png" width="49%" alt="Opções do console">
+  <img src="assets/capturas/configuracoes.png" width="49%" alt="Configurações">
+  <img src="assets/capturas/opcoes.png" width="49%" alt="Opções do console">
 </p>
 
 ## Instalação no Steam Deck
