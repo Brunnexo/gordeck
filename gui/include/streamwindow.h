@@ -3,6 +3,7 @@
 #ifndef CHIAKI_GUI_STREAMWINDOW_H
 #define CHIAKI_GUI_STREAMWINDOW_H
 
+#include <QElapsedTimer>
 #include <QMainWindow>
 
 #include "streamsession.h"
@@ -26,6 +27,14 @@ class StreamWindow: public QMainWindow
 		AVOpenGLWidget *av_widget;
 		ScreenSaverInhibitor *screensaver_inhibitor;
 
+		// countdown shown while the PS/home button is held to force-quit
+		QLabel *home_hold_label;
+		QTimer *home_hold_update_timer;
+		QElapsedTimer home_hold_elapsed;
+		bool force_quit;
+
+		void UpdateHomeHoldLabel();
+
 		void Init();
 		void UpdateVideoTransform();
 
@@ -45,6 +54,8 @@ class StreamWindow: public QMainWindow
 	private slots:
 		void SessionQuit(ChiakiQuitReason reason, const QString &reason_str);
 		void LoginPINRequested(bool incorrect);
+		void HomeButtonHeld(bool held);
+		void ForceQuit();
 		void ToggleFullscreen();
 		void ToggleStretch();
 		void ToggleZoom();

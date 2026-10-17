@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QCoreApplication>
 #include <QAction>
+#include <QTimer>
 
 StreamWindow::StreamWindow(const StreamSessionConnectInfo &connect_info, QWidget *parent)
 	: QMainWindow(parent),
@@ -25,6 +26,9 @@ StreamWindow::StreamWindow(const StreamSessionConnectInfo &connect_info, QWidget
 	session = nullptr;
 	av_widget = nullptr;
 	screensaver_inhibitor = nullptr;
+	home_hold_label = nullptr;
+	home_hold_update_timer = nullptr;
+	force_quit = false;
 
 	try
 	{
@@ -53,6 +57,17 @@ void StreamWindow::Init()
 
 	connect(session, &StreamSession::SessionQuit, this, &StreamWindow::SessionQuit);
 	connect(session, &StreamSession::LoginPINRequested, this, &StreamWindow::LoginPINRequested);
+	connect(session, &StreamSession::HomeButtonHeld, this, &StreamWindow::HomeButtonHeld);
+	connect(session, &StreamSession::ForceQuitRequested, this, &StreamWindow::ForceQuit);
+
+	home_hold_label = new QLabel(this);
+	home_hold_label->setAlignment(Qt::AlignCenter);
+	home_hold_label->setStyleSheet("background-color: rgba(21, 29, 48, 235); color: #ecf1fa; font-size: 15pt;"
+			"border: 2px solid #ff5c6c; border-radius: 16px; padding: 14px 28px;");
+	home_hold_label->hide();
+	home_hold_update_timer = new QTimer(this);
+	home_hold_update_timer->setInterval(200);
+	connect(home_hold_update_timer, &QTimer::timeout, this, &StreamWindow::UpdateHomeHoldLabel);
 
 	AVOpenGLWidget::ResolutionMode resolution_mode;
 	if(connect_info.zoom)
@@ -134,6 +149,46 @@ bool StreamWindow::event(QEvent *event)
 	return QMainWindow::event(event);
 }
 
+void StreamWindow::HomeButtonHeld(bool held)
+{
+	if(held)
+	{
+		home_hold_elapsed.start();
+		home_hold_update_timer->start();
+	}
+	else
+	{
+		home_hold_update_timer->stop();
+		home_hold_label->hide();
+	}
+}
+
+void StreamWindow::UpdateHomeHoldLabel()
+{
+	// only show the countdown when the button is held on purpose
+	const qint64 show_after_ms = 5000;
+	const qint64 quit_after_ms = 30000;
+	qint64 elapsed = home_hold_elapsed.elapsed();
+	if(elapsed < show_after_ms)
+		return;
+	qint64 remaining = (quit_after_ms - elapsed + 999) / 1000;
+	if(remaining < 1)
+		remaining = 1;
+	home_hold_label->setText(tr("Keep holding the home button to end the stream: %1 s").arg(remaining));
+	home_hold_label->adjustSize();
+	home_hold_label->move((width() - home_hold_label->width()) / 2, height() / 8);
+	home_hold_label->show();
+	home_hold_label->raise();
+}
+
+void StreamWindow::ForceQuit()
+{
+	home_hold_update_timer->stop();
+	home_hold_label->hide();
+	force_quit = true;
+	close();
+}
+
 void StreamWindow::Quit()
 {
 	close();
@@ -167,7 +222,7 @@ void StreamWindow::closeEvent(QCloseEvent *event)
 {
 	if(session)
 	{
-		if(session->IsConnected())
+		if(session->IsConnected() && !force_quit)
 		{
 			bool sleep = false;
 			switch(connect_info.settings->GetDisconnectAction())

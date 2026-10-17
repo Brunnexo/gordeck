@@ -1006,5 +1006,9 @@
         <source>Streaming from the PlayStation</source>
         <translation>Transmitindo do PlayStation</translation>
     </message>
+    <message>
+        <source>Keep holding the home button to end the stream: %1 s</source>
+        <translation>Continue segurando o botão home para encerrar a transmissão: %1 s</translation>
+    </message>
 </context>
 </TS>

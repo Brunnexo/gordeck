@@ -74,6 +74,10 @@ class StreamSession : public QObject
 		bool connected;
 
 		QHash<int, Controller *> controllers;
+
+		// holding the PS/home button for a while force-quits the stream
+		QTimer *home_hold_timer;
+		bool home_held;
 #if CHIAKI_GUI_ENABLE_SETSU
 		Setsu *setsu;
 		QMap<QPair<QString, SetsuTrackingId>, uint8_t> setsu_ids;
@@ -139,6 +143,12 @@ class StreamSession : public QObject
 		void FfmpegFrameAvailable();
 		void SessionQuit(ChiakiQuitReason reason, const QString &reason_str);
 		void LoginPINRequested(bool incorrect);
+
+		/**
+		 * The PS/home button was pressed (true) or released (false)
+		 */
+		void HomeButtonHeld(bool held);
+		void ForceQuitRequested();
 
 	private slots:
 		void UpdateGamepads();

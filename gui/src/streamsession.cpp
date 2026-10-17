@@ -10,6 +10,8 @@
 #include <QAudioOutput>
 
 #include <cstring>
+
+#define HOME_HOLD_QUIT_MS 30000
 #include <chiaki/session.h>
 
 #define SETSU_UPDATE_INTERVAL_MS 4
@@ -59,6 +61,12 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 {
 	connected = false;
 	ChiakiErrorCode err;
+
+	home_held = false;
+	home_hold_timer = new QTimer(this);
+	home_hold_timer->setSingleShot(true);
+	home_hold_timer->setInterval(HOME_HOLD_QUIT_MS);
+	connect(home_hold_timer, &QTimer::timeout, this, &StreamSession::ForceQuitRequested);
 
 #if CHIAKI_LIB_ENABLE_PI_DECODER
 	if(connect_info.decoder == Decoder::Pi)
@@ -446,6 +454,17 @@ void StreamSession::SendFeedbackState()
 	chiaki_controller_state_or(&state, &state, &keyboard_state);
 	chiaki_controller_state_or(&state, &state, &touch_state);
 	chiaki_session_set_controller_state(&session, &state);
+
+	bool home = state.buttons & CHIAKI_CONTROLLER_BUTTON_PS;
+	if(home != home_held)
+	{
+		home_held = home;
+		if(home)
+			home_hold_timer->start();
+		else
+			home_hold_timer->stop();
+		emit HomeButtonHeld(home);
+	}
 }
 
 void StreamSession::InitAudio(unsigned int channels, unsigned int rate)
