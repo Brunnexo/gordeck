@@ -30,4 +30,6 @@ cp "$ROOT"/installer/steam-art/*.png "$PKG/steam-art/"
 chmod +x "$PKG/install.sh" "$PKG/add-to-steam.py" "$PKG/Instalar Gordeck.desktop"
 
 tar -C "$ROOT/dist" -czf "$ROOT/dist/$PKG_NAME.tar.gz" "$PKG_NAME"
+# the bundle on its own, for other distributions
+cp "$PKG/gordeck.flatpak" "$ROOT/dist/gordeck.flatpak"
 echo "==> Done: $ROOT/dist/$PKG_NAME.tar.gz"

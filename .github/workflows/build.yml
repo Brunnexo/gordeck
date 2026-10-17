@@ -86,7 +86,7 @@ jobs:
         with:
           name: flatpak
           path: |
-            dist/Gordeck-Instalador/gordeck.flatpak
+            dist/gordeck.flatpak
             dist/Gordeck-Instalador.tar.gz
 
   release:
