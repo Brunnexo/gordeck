@@ -1,122 +1,108 @@
-<p align="center"><img src="gui/res/gordeck.svg" width="160" alt="Ícone do Gordeck"></p>
+<p align="center">
+  <img src="assets/gordeck-banner.png" alt="Gordeck - Remote Play">
+</p>
 
-# Gordeck
+<h3 align="center">Jogue seu PlayStation no Steam Deck, do sofá, da cama ou de qualquer lugar da casa.</h3>
 
-[![Build](https://github.com/Brunnexo/gordeck/actions/workflows/build.yml/badge.svg)](https://github.com/Brunnexo/gordeck/actions/workflows/build.yml)
+<p align="center">
+  <a href="https://github.com/Brunnexo/gordeck/releases/latest"><img src="https://img.shields.io/github/v/release/Brunnexo/gordeck?label=baixar&style=for-the-badge&color=2f8cff" alt="Baixar"></a>
+  <a href="https://github.com/Brunnexo/gordeck/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/Brunnexo/gordeck/build.yml?branch=main&label=build&style=for-the-badge" alt="Build"></a>
+  <a href="COPYING"><img src="https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue?style=for-the-badge" alt="Licença AGPL-3.0"></a>
+</p>
 
-Cliente de **Remote Play para PlayStation 4 e PlayStation 5**, livre e de código aberto, pensado para o **Steam Deck**.
+---
 
-O Gordeck é baseado no [chiaki4deck](https://streetpea.github.io/chiaki4deck/), de Street Pea, que por sua vez é baseado no [Chiaki](https://git.sr.ht/~thestr4ng3r/chiaki), de thestr4ng3r.
+O **Gordeck** transmite os jogos do seu **PS5 ou PS4** para o **Steam Deck** pela rede de casa, com imagem, som e controle, como se você estivesse na frente da TV. Gratuito, de código aberto e feito para ser usado só com o controle: abriu, escolheu o console, apertou **A** e está jogando.
 
-**Aviso:** este projeto não é endossado nem certificado pela Sony Interactive Entertainment LLC.
+<p align="center">
+  <img src="assets/screenshots/tela-principal.png" width="80%" alt="Tela principal do Gordeck">
+</p>
 
-## Novidades em relação ao chiaki4deck
+## Por que o Gordeck
 
-- **Interface em tela cheia no estilo EmulationStation**: carrossel horizontal de consoles com cards grandes, animações e o estado de cada console (pronto, em repouso ou adicionado manualmente).
-- **Navegação completa pelo controle**: tela principal, menus e diálogos podem ser usados sem teclado nem mouse.
-- **Botões do controle que você está usando**: a barra de dicas mostra os botões do Steam Deck, do DualShock/DualSense ou de um controle genérico, conforme o último controle usado. Sem controle, mostra as teclas do teclado.
-- **Ligar e conectar com um botão**: se o console estiver em repouso, o Gordeck manda o sinal para ligá-lo e inicia a transmissão sozinho assim que o console estiver pronto.
-- **Totalmente em português do Brasil**, com o inglês como idioma alternativo (em *Configurações → Interface → Idioma*).
-- Tema escuro em toda a interface, ícones novos e tela de toque (toque para selecionar, toque de novo para conectar, deslize para trocar de console).
+🎮 **Feito para o controle.** Uma interface em tela cheia no estilo dos frontends de emulação, com carrossel de consoles, menus e janelas que você navega só com o direcional e os botões. Sem teclado, sem mouse.
+
+⚡ **Um botão para jogar.** Se o console estiver em repouso, o Gordeck liga o PlayStation e começa a transmissão sozinho assim que ele estiver pronto.
+
+🕹️ **Mostra os botões certos.** As dicas na tela se adaptam ao controle que você está usando: Steam Deck, DualSense/DualShock ou controle genérico.
+
+🇧🇷 **Em português.** Toda a interface está em português do Brasil, com o inglês disponível nas configurações.
+
+🖥️ **Tela sempre acesa.** Durante a transmissão, o Steam Deck não apaga a tela nem entra em repouso enquanto você joga só com o controle.
+
+🚪 **Saída de emergência.** Segure o botão home por 7 segundos para encerrar a transmissão a qualquer momento.
+
+📚 **Direto na biblioteca da Steam.** O instalador adiciona o Gordeck à Steam com ícone, capas e banner, pronto para abrir no modo Jogo.
+
+<p align="center">
+  <img src="assets/screenshots/configuracoes.png" width="49%" alt="Configurações">
+  <img src="assets/screenshots/opcoes.png" width="49%" alt="Opções do console">
+</p>
+
+## Instalação no Steam Deck
+
+1. Mude para o **modo Desktop** (botão Steam › Ligar/desligar › Mudar para o modo Desktop).
+2. Baixe o **`Gordeck-Instalador.tar.gz`** da [página de downloads](https://github.com/Brunnexo/gordeck/releases/latest) e extraia o arquivo.
+3. Dê um duplo clique em **Instalar Gordeck** e siga as instruções.
+4. Volte ao **modo Jogo**: o Gordeck estará na sua biblioteca, em **Não-Steam**.
+
+O instalador cuida de tudo: baixa os componentes necessários, instala o app, traz os consoles que você já tinha registrado no Chiaki4deck e coloca o Gordeck na Steam. Use o mesmo instalador para atualizar ou desinstalar.
+
+## Outras distribuições Linux
+
+| Sistema | Download |
+|---|---|
+| Qualquer distribuição (Flatpak) | `gordeck.flatpak` › `flatpak install --user gordeck.flatpak` |
+| Ubuntu 24.04 e derivados | `gordeck-*-ubuntu-24.04-*.deb` |
+| Debian 12 | `gordeck-*-debian-12-*.deb` |
+| Fedora 41 | `gordeck-*-fedora-41-*.rpm` |
+
+Todos os arquivos estão na [página de downloads](https://github.com/Brunnexo/gordeck/releases/latest).
+
+## Primeiros passos
+
+1. Ligue o PlayStation e conecte o Steam Deck à **mesma rede** dele.
+2. Abra o Gordeck. O console aparece sozinho na tela (ou use **Adicionar console** para informar o IP).
+3. Selecione o console e aperte **A** para registrar. No PlayStation, abra **Configurações › Sistema › Reprodução Remota › Vincular dispositivo** e digite no Gordeck o PIN que aparecer.
+4. Pronto! Daqui em diante, é só selecionar o console e apertar **A** para jogar.
+
+> Para o PS4 e o PS5, o Gordeck também pede o **ID da sua conta PSN**. Veja como obter na [documentação do chiaki4deck](https://streetpea.github.io/chiaki4deck/setup/configuration/).
 
 ## Comandos
 
 | Controle | Teclado | Ação |
 |---|---|---|
-| Direcional / analógico esquerdo | ← → | Navegar entre os consoles |
-| A | Enter | Conectar, registrar ou adicionar console |
-| B | Esc | Sair |
-| X | W | Ligar o console |
-| Y | O | Opções do console (editar, excluir) |
-| Menu (≡) | F1 | Configurações |
-| View (⧉) | F3 | Ativar ou desativar a busca automática |
-| L1 / R1 | Home / End | Ir para o primeiro / último console |
-| — | F11 | Alternar tela cheia |
+| Direcional / analógico | ← → | Escolher o console |
+| **A** | Enter | Conectar, registrar ou adicionar |
+| **B** | Esc | Voltar / sair |
+| **X** | W | Ligar o console |
+| **Y** | O | Opções do console |
+| **≡** Menu | F1 | Configurações |
+| **⧉** View | F3 | Busca automática de consoles |
+| Segurar **home** por 7 s | — | Encerrar a transmissão |
 
-Dentro dos diálogos, use cima/baixo para mudar o foco, A para confirmar e B para cancelar.
+## Perguntas frequentes
 
-> **Dica:** abra o Gordeck pela Steam (no modo Jogo ou como jogo não-Steam no modo Desktop). Fora da Steam, o controle embutido do Steam Deck não é reconhecido como controle.
+**Preciso de um PlayStation Plus ou de alguma assinatura?**
+Não. O Remote Play é um recurso gratuito do PS4 e do PS5.
 
-## Instalação no Steam Deck
+**Funciona fora de casa?**
+Funciona melhor na mesma rede Wi-Fi. Para jogar de fora, é preciso configurar o roteador; veja a [documentação do chiaki4deck](https://streetpea.github.io/chiaki4deck/).
 
-1. No modo Desktop, baixe e extraia o `Gordeck-Instalador.tar.gz`.
-2. Dê um duplo clique em **Instalar Gordeck** (ou rode `./install.sh`).
-3. Escolha **Instalar o Gordeck** e siga as instruções.
+**O controle não responde no Gordeck.**
+Abra o Gordeck pela Steam (no modo Jogo ou como jogo não-Steam). Fora da Steam, o controle do Steam Deck não é reconhecido pelo app.
 
-O instalador gráfico baixa do Flathub os componentes do KDE que o Gordeck usa, instala o app, importa os consoles registrados do Chiaki4deck (se houver) e, se você quiser, **adiciona o Gordeck à biblioteca da Steam com ícone, capas, banner e logo**, pronto para o modo Jogo. O mesmo instalador atualiza e desinstala o Gordeck.
+**Já usava o Chiaki4deck. Perco meus consoles?**
+Não. O instalador importa os consoles registrados para o Gordeck.
 
-Também é possível só adicionar à Steam um Gordeck já instalado:
+## Créditos
 
-```bash
-python3 installer/add-to-steam.py
-```
+O Gordeck nasceu do [chiaki4deck](https://streetpea.github.io/chiaki4deck/), de Street Pea, que por sua vez é baseado no [Chiaki](https://git.sr.ht/~thestr4ng3r/chiaki), de thestr4ng3r. Obrigado a todos que contribuíram com esses projetos.
 
-(feche a Steam antes; a Steam reescreve a lista de atalhos ao sair).
-
-### Gerar o pacote do instalador
-
-```bash
-./installer/build-package.sh
-```
-
-O pacote fica em `dist/Gordeck-Instalador.tar.gz`. As artes da Steam ficam em `installer/steam-art/` e são geradas por `installer/steam-art/generate.py`.
-
-## Compilação e instalação (Flatpak)
-
-São necessários o `flatpak` e o [Flatpak Builder](https://flathub.org/apps/org.flatpak.Builder), além do SDK do KDE:
-
-```bash
-flatpak install --user flathub org.kde.Sdk//5.15-25.08 org.kde.Platform//5.15-25.08 org.flatpak.Builder
-```
-
-Para compilar e instalar:
-
-```bash
-flatpak run org.flatpak.Builder --user --install --force-clean build-dir flatpak-build.yaml
-```
-
-Depois, é só abrir o Gordeck pelo menu de aplicativos ou adicioná-lo à Steam como jogo não-Steam.
-
-## Outras distribuições Linux
-
-Cada [release](https://github.com/Brunnexo/gordeck/releases) traz:
-
-- `gordeck.flatpak`: funciona em qualquer distribuição (`flatpak install --user gordeck.flatpak`);
-- pacotes nativos `.deb` para **Ubuntu 24.04** e **Debian 12** e `.rpm` para **Fedora 41**.
-
-O build também é testado no **Arch Linux**.
-
-### Integração contínua
-
-O workflow `.github/workflows/build.yml` roda a cada push e pull request: compila o Gordeck e roda os testes unitários em Ubuntu, Debian, Fedora e Arch (em contêineres) e gera o Flatpak e o pacote do instalador. Para publicar um release, crie e envie uma tag:
-
-```bash
-git tag v2.1.1
-git push origin v2.1.1
-```
-
-Para reproduzir localmente o build de uma distribuição (com podman ou docker):
-
-```bash
-podman run --rm -v "$PWD":/src:ro,Z -w /src -e BUILD_DIR=/tmp/build -e DIST_DIR=/tmp/dist \
-	docker.io/library/ubuntu:24.04 bash .github/scripts/build-native.sh
-```
-
-## Traduções
-
-Os textos da interface ficam em `gui/i18n/`. Para atualizar o arquivo de tradução depois de mudar textos no código:
-
-```bash
-cd gui
-lupdate -no-obsolete -locations none src include -ts i18n/chiaki_pt_BR.ts
-```
-
-As traduções são compiladas e embutidas no executável durante o build.
-
-## Documentação
-
-A documentação do chiaki4deck, que também vale para o Gordeck (registro do console, encaminhamento de portas, uso remoto etc.), está em [streetpea.github.io/chiaki4deck](https://streetpea.github.io/chiaki4deck/).
+Quer compilar ou contribuir? Veja o [guia de desenvolvimento](DESENVOLVIMENTO.md).
 
 ## Licença
 
-Distribuído sob a [GNU Affero General Public License versão 3](COPYING) (AGPLv3), como o Chiaki e o chiaki4deck.
+Software livre, distribuído sob a [GNU Affero General Public License versão 3](COPYING).
+
+<sub>PlayStation, PS4, PS5 e DualSense são marcas da Sony Interactive Entertainment. Steam e Steam Deck são marcas da Valve Corporation. O Gordeck é um projeto independente, sem relação com a Sony ou a Valve, e não é endossado nem certificado por elas.</sub>
