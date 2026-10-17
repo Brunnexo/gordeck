@@ -166,8 +166,8 @@ void StreamWindow::HomeButtonHeld(bool held)
 void StreamWindow::UpdateHomeHoldLabel()
 {
 	// only show the countdown when the button is held on purpose
-	const qint64 show_after_ms = 5000;
-	const qint64 quit_after_ms = 30000;
+	const qint64 show_after_ms = 3000;
+	const qint64 quit_after_ms = HOME_HOLD_QUIT_MS;
 	qint64 elapsed = home_hold_elapsed.elapsed();
 	if(elapsed < show_after_ms)
 		return;

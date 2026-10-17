@@ -11,7 +11,6 @@
 
 #include <cstring>
 
-#define HOME_HOLD_QUIT_MS 30000
 #include <chiaki/session.h>
 
 #define SETSU_UPDATE_INTERVAL_MS 4

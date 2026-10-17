@@ -61,6 +61,10 @@ struct StreamSessionConnectInfo
 	StreamSessionConnectInfo(Settings *settings, ChiakiTarget target, QString host, QByteArray regist_key, QByteArray morning, QString initial_login_pin, bool fullscreen, bool zoom, bool stretch);
 };
 
+// holding the PS/home button this long force-quits the stream
+// (some controllers turn off when the button is held for about 20 s)
+#define HOME_HOLD_QUIT_MS 10000
+
 class StreamSession : public QObject
 {
 	friend class StreamSessionPrivate;
