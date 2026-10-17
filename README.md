@@ -1,3 +1,5 @@
+<p align="center"><img src="gui/res/gordeck.svg" width="160" alt="Ícone do Gordeck"></p>
+
 # Gordeck
 
 Cliente de **Remote Play para PlayStation 4 e PlayStation 5**, livre e de código aberto, pensado para o **Steam Deck**.

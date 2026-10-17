@@ -114,7 +114,7 @@ MainWindow::MainWindow(Settings *settings, QWidget *parent)
 	root_layout->addLayout(header_layout);
 
 	auto logo_label = new QLabel(this);
-	logo_label->setPixmap(RenderIcon(":/icons/chiaki.svg", 44, QColor(), devicePixelRatioF()));
+	logo_label->setPixmap(RenderIcon(":/icons/gordeck.svg", 44, QColor(), devicePixelRatioF()));
 	header_layout->addWidget(logo_label);
 
 	title_label = new QLabel(this);

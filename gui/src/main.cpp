@@ -73,7 +73,7 @@ int real_main(int argc, char *argv[])
 
 	QApplication app(argc, argv);
 
-	QApplication::setWindowIcon(QIcon(":/icons/chiaki.svg"));
+	QApplication::setWindowIcon(QIcon(":/icons/gordeck.svg"));
 
 	QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
