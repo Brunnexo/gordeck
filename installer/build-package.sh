@@ -12,8 +12,11 @@ REPO="$ROOT/.flatpak-repo"
 PKG_NAME="Gordeck-Instalador"
 PKG="$ROOT/dist/$PKG_NAME"
 
+# flatpak-builder command, e.g. FLATPAK_BUILDER=flatpak-builder when it is installed natively (CI)
+read -r -a BUILDER <<< "${FLATPAK_BUILDER:-flatpak run org.flatpak.Builder}"
+
 echo "==> Building Gordeck"
-flatpak run org.flatpak.Builder --ccache --force-clean --repo="$REPO" \
+"${BUILDER[@]}" --ccache --force-clean --repo="$REPO" \
 	"$ROOT/build-dir" "$ROOT/flatpak-build.yaml"
 
 echo "==> Packaging"

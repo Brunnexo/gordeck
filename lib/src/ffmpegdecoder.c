@@ -99,7 +99,7 @@ error_mutex:
 
 CHIAKI_EXPORT void chiaki_ffmpeg_decoder_fini(ChiakiFfmpegDecoder *decoder)
 {
-	avcodec_close(decoder->codec_context);
+	// also closes the codec, avcodec_close() was removed in FFmpeg 8
 	avcodec_free_context(&decoder->codec_context);
 	if(decoder->hw_device_ctx)
 		av_buffer_unref(&decoder->hw_device_ctx);
@@ -110,13 +110,19 @@ CHIAKI_EXPORT bool chiaki_ffmpeg_decoder_video_sample_cb(uint8_t *buf, size_t bu
 	ChiakiFfmpegDecoder *decoder = user;
 
 	chiaki_mutex_lock(&decoder->mutex);
-	AVPacket packet;
-	av_init_packet(&packet);
-	packet.data = buf;
-	packet.size = buf_size;
+	// av_init_packet() on a stack AVPacket is deprecated and removed in newer FFmpeg versions
+	AVPacket *packet = av_packet_alloc();
+	if(!packet)
+	{
+		CHIAKI_LOGE(decoder->log, "Failed to alloc AVPacket");
+		chiaki_mutex_unlock(&decoder->mutex);
+		return false;
+	}
+	packet->data = buf;
+	packet->size = buf_size;
 	int r;
 send_packet:
-	r = avcodec_send_packet(decoder->codec_context, &packet);
+	r = avcodec_send_packet(decoder->codec_context, packet);
 	if(r != 0)
 	{
 		if(r == AVERROR(EAGAIN))
@@ -145,11 +151,13 @@ send_packet:
 			goto hell;
 		}
 	}
+	av_packet_free(&packet);
 	chiaki_mutex_unlock(&decoder->mutex);
 
 	decoder->frame_available_cb(decoder, decoder->frame_available_cb_user);
 	return true;
 hell:
+	av_packet_free(&packet);
 	chiaki_mutex_unlock(&decoder->mutex);
 	return false;
 }

@@ -2,6 +2,8 @@
 
 # Gordeck
 
+[![Build](https://github.com/Brunnexo/gordeck/actions/workflows/build.yml/badge.svg)](https://github.com/Brunnexo/gordeck/actions/workflows/build.yml)
+
 Cliente de **Remote Play para PlayStation 4 e PlayStation 5**, livre e de código aberto, pensado para o **Steam Deck**.
 
 O Gordeck é baseado no [chiaki4deck](https://streetpea.github.io/chiaki4deck/), de Street Pea, que por sua vez é baseado no [Chiaki](https://git.sr.ht/~thestr4ng3r/chiaki), de thestr4ng3r.
@@ -74,6 +76,31 @@ flatpak run org.flatpak.Builder --user --install --force-clean build-dir flatpak
 ```
 
 Depois, é só abrir o Gordeck pelo menu de aplicativos ou adicioná-lo à Steam como jogo não-Steam.
+
+## Outras distribuições Linux
+
+Cada [release](https://github.com/Brunnexo/gordeck/releases) traz:
+
+- `gordeck.flatpak`: funciona em qualquer distribuição (`flatpak install --user gordeck.flatpak`);
+- pacotes nativos `.deb` para **Ubuntu 24.04** e **Debian 12** e `.rpm` para **Fedora 41**.
+
+O build também é testado no **Arch Linux**.
+
+### Integração contínua
+
+O workflow `.github/workflows/build.yml` roda a cada push e pull request: compila o Gordeck e roda os testes unitários em Ubuntu, Debian, Fedora e Arch (em contêineres) e gera o Flatpak e o pacote do instalador. Para publicar um release, crie e envie uma tag:
+
+```bash
+git tag v2.1.1
+git push origin v2.1.1
+```
+
+Para reproduzir localmente o build de uma distribuição (com podman ou docker):
+
+```bash
+podman run --rm -v "$PWD":/src:ro,Z -w /src -e BUILD_DIR=/tmp/build -e DIST_DIR=/tmp/dist \
+	docker.io/library/ubuntu:24.04 bash .github/scripts/build-native.sh
+```
 
 ## Traduções
 
