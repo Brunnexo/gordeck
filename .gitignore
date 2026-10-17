@@ -39,3 +39,4 @@ build-dir/
 # Installer package
 .flatpak-repo/
 dist/
+__pycache__/
