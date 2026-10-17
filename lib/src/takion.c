@@ -31,6 +31,12 @@
 // VERY similar to SCTP, see RFC 4960
 
 #define TAKION_A_RWND 0x19000
+
+// Receive buffer requested for the UDP socket. It is deliberately much larger than the
+// protocol window (TAKION_A_RWND, 100 KiB): at 15 Mbit/s that window holds only ~50 ms of
+// video, so any short stall of the receive thread makes the kernel drop packets before we
+// ever see them, which then shows up as FEC failures and macroblocking.
+#define TAKION_SOCKET_RCVBUF_SIZE (2 * 1024 * 1024)
 #define TAKION_OUTBOUND_STREAMS 0x64
 #define TAKION_INBOUND_STREAMS 0x64
 
@@ -233,14 +239,26 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 		goto error_pipe;
 	}
 
-	const int rcvbuf_val = takion->a_rwnd;
+	int rcvbuf_val = TAKION_SOCKET_RCVBUF_SIZE;
 	int r = setsockopt(takion->sock, SOL_SOCKET, SO_RCVBUF, (const void *)&rcvbuf_val, sizeof(rcvbuf_val));
 	if(r < 0)
 	{
-		CHIAKI_LOGE(takion->log, "Takion failed to setsockopt SO_RCVBUF: %s", strerror(errno));
-		ret = CHIAKI_ERR_NETWORK;
-		goto error_sock;
+		CHIAKI_LOGW(takion->log, "Takion failed to setsockopt SO_RCVBUF to %d, falling back to %d: %s",
+				rcvbuf_val, (int)takion->a_rwnd, strerror(errno));
+		rcvbuf_val = takion->a_rwnd;
+		r = setsockopt(takion->sock, SOL_SOCKET, SO_RCVBUF, (const void *)&rcvbuf_val, sizeof(rcvbuf_val));
+		if(r < 0)
+		{
+			CHIAKI_LOGE(takion->log, "Takion failed to setsockopt SO_RCVBUF: %s", strerror(errno));
+			ret = CHIAKI_ERR_NETWORK;
+			goto error_sock;
+		}
 	}
+	// The kernel may silently clamp the value (Linux: net.core.rmem_max), so log what we actually got.
+	int rcvbuf_actual = 0;
+	socklen_t rcvbuf_actual_len = sizeof(rcvbuf_actual);
+	if(getsockopt(takion->sock, SOL_SOCKET, SO_RCVBUF, (void *)&rcvbuf_actual, &rcvbuf_actual_len) == 0)
+		CHIAKI_LOGI(takion->log, "Takion socket receive buffer: requested %d, got %d bytes", TAKION_SOCKET_RCVBUF_SIZE, rcvbuf_actual);
 
 	if(info->ip_dontfrag)
 	{
