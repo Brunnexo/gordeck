@@ -155,7 +155,7 @@ void Settings::SetCodec(ChiakiCodec codec)
 
 unsigned int Settings::GetAudioBufferSizeDefault() const
 {
-	return 9600;
+	return 3840; // bytes: 960 stereo 16-bit samples = 20 ms @ 48 kHz
 }
 
 unsigned int Settings::GetAudioBufferSizeRaw() const

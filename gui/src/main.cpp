@@ -26,8 +26,6 @@ int main(int argc, char *argv[]) { return real_main(argc, argv); }
 #include <string.h>
 
 #include <QApplication>
-#include <QAudioOutput>
-#include <QAudioFormat>
 #include <QCommandLineParser>
 #include <QMap>
 #include <QSurfaceFormat>

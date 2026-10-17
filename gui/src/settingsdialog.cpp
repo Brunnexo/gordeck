@@ -13,7 +13,6 @@
 #include <QAbstractButton>
 #include <QApplication>
 #include <QComboBox>
-#include <QFutureWatcher>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QIntValidator>
@@ -28,7 +27,8 @@
 #include <QStackedWidget>
 #include <QStyle>
 #include <QVBoxLayout>
-#include <QtConcurrent>
+
+#include <SDL.h>
 
 #include <chiaki/config.h>
 #include <chiaki/ffmpegdecoder.h>
@@ -195,22 +195,26 @@ SettingsDialog::SettingsDialog(Settings *settings, HintStyle hint_style, QWidget
 		this->settings->SetAudioOutDevice(audio_device_combo_box->currentData().toString());
 	});
 
-	// do this async because it's slow, assuming availableDevices() is thread-safe
-	auto audio_devices_future = QtConcurrent::run([]() {
-		return QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
-	});
-	auto audio_devices_future_watcher = new QFutureWatcher<QList<QAudioDeviceInfo>>(this);
-	connect(audio_devices_future_watcher, &QFutureWatcher<QList<QAudioDeviceInfo>>::finished, this, [this, audio_devices_future_watcher, settings]() {
-		auto available_devices = audio_devices_future_watcher->result();
+	if(SDL_InitSubSystem(SDL_INIT_AUDIO) == 0)
+	{
 		QSignalBlocker blocker(audio_device_combo_box);
 		while(audio_device_combo_box->count() > 1) // remove all but "Auto"
 			audio_device_combo_box->removeItem(1);
-		for(QAudioDeviceInfo di : available_devices)
-			audio_device_combo_box->addItem(di.deviceName(), di.deviceName());
-		int audio_out_device_index = audio_device_combo_box->findData(settings->GetAudioOutDevice());
+		int devices_count = SDL_GetNumAudioDevices(0);
+		for(int i=0; i<devices_count; i++)
+		{
+			QString name = QString::fromUtf8(SDL_GetAudioDeviceName(i, 0));
+			audio_device_combo_box->addItem(name, name);
+		}
+		int audio_out_device_index = audio_device_combo_box->findData(current_audio_device);
+		if(audio_out_device_index < 0 && !current_audio_device.isEmpty())
+		{
+			// keep showing a device that is not available right now (or a name saved by an older version)
+			audio_device_combo_box->addItem(current_audio_device, current_audio_device);
+			audio_out_device_index = audio_device_combo_box->count() - 1;
+		}
 		audio_device_combo_box->setCurrentIndex(audio_out_device_index < 0 ? 0 : audio_out_device_index);
-	});
-	audio_devices_future_watcher->setFuture(audio_devices_future);
+	}
 	stream_page->addWidget(CreateRow(tr("Audio Output Device"), tr("Where the sound of the console is played."), audio_device_combo_box));
 
 	audio_buffer_size_edit = new QLineEdit(this);

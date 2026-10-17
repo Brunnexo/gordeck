@@ -7,7 +7,10 @@
 #include <chiaki/base64.h>
 
 #include <QKeyEvent>
-#include <QAudioOutput>
+
+#include <SDL.h>
+
+#include <algorithm>
 
 #include <cstring>
 
@@ -55,8 +58,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 #if CHIAKI_LIB_ENABLE_PI_DECODER
 	pi_decoder(nullptr),
 #endif
-	audio_output(nullptr),
-	audio_io(nullptr)
+	audio_out(0),
+	audio_out_sample_size(0),
+	audio_queue_max(0)
 {
 	connected = false;
 	ChiakiErrorCode err;
@@ -97,18 +101,7 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 	}
 #endif
 
-	audio_out_device_info = QAudioDeviceInfo::defaultOutputDevice();
-	if(!connect_info.audio_out_device.isEmpty())
-	{
-		for(QAudioDeviceInfo di : QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
-		{
-			if(di.deviceName() == connect_info.audio_out_device)
-			{
-				audio_out_device_info = di;
-				break;
-			}
-		}
-	}
+	audio_out_device_name = connect_info.audio_out_device;
 
 	chiaki_opus_decoder_init(&opus_decoder, log.GetChiakiLog());
 	audio_buffer_size = connect_info.audio_buffer_size;
@@ -197,6 +190,7 @@ StreamSession::~StreamSession()
 {
 	chiaki_session_join(&session);
 	chiaki_session_fini(&session);
+	CloseAudio(); // only after join: the session thread is what pushes audio
 	chiaki_opus_decoder_fini(&opus_decoder);
 #if CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 	for(auto controller : controllers)
@@ -468,40 +462,76 @@ void StreamSession::SendFeedbackState()
 
 void StreamSession::InitAudio(unsigned int channels, unsigned int rate)
 {
-	delete audio_output;
-	audio_output = nullptr;
-	audio_io = nullptr;
+	CloseAudio();
 
-	QAudioFormat audio_format;
-	audio_format.setSampleRate(rate);
-	audio_format.setChannelCount(channels);
-	audio_format.setSampleSize(16);
-	audio_format.setCodec("audio/pcm");
-	audio_format.setSampleType(QAudioFormat::SignedInt);
-
-	QAudioDeviceInfo audio_device_info = audio_out_device_info;
-	if(!audio_device_info.isFormatSupported(audio_format))
+	if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
 	{
-		CHIAKI_LOGE(log.GetChiakiLog(), "Audio Format with %u channels @ %u Hz not supported by Audio Device %s",
-					channels, rate,
-					audio_device_info.deviceName().toLocal8Bit().constData());
+		CHIAKI_LOGE(log.GetChiakiLog(), "Failed to initialize SDL audio: %s", SDL_GetError());
 		return;
 	}
 
-	audio_output = new QAudioOutput(audio_device_info, audio_format, this);
-	audio_output->setBufferSize(audio_buffer_size);
-	audio_io = audio_output->start();
+	audio_out_sample_size = channels * sizeof(int16_t);
 
-	CHIAKI_LOGI(log.GetChiakiLog(), "Audio Device %s opened with %u channels @ %u Hz, buffer size %u",
-				audio_device_info.deviceName().toLocal8Bit().constData(),
-				channels, rate, audio_output->bufferSize());
+	// The device buffer is the main source of output latency, so it is kept small.
+	// The setting is in bytes for compatibility with the value the old Qt backend used.
+	SDL_AudioSpec want = {};
+	want.freq = (int)rate;
+	want.channels = (Uint8)channels;
+	want.format = AUDIO_S16SYS;
+	want.samples = (Uint16)std::max(64u, audio_buffer_size / audio_out_sample_size);
+
+	SDL_AudioSpec have = {};
+	QByteArray device_name_utf8 = audio_out_device_name.toUtf8();
+	const char *device_name = audio_out_device_name.isEmpty() ? nullptr : device_name_utf8.constData();
+	audio_out = SDL_OpenAudioDevice(device_name, 0, &want, &have, 0);
+	if(!audio_out && device_name)
+	{
+		CHIAKI_LOGW(log.GetChiakiLog(), "Failed to open Audio Device \"%s\" (%s), falling back to the default device",
+				device_name, SDL_GetError());
+		device_name = nullptr;
+		audio_out = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
+	}
+	if(!audio_out)
+	{
+		CHIAKI_LOGE(log.GetChiakiLog(), "Failed to open default Audio Device: %s", SDL_GetError());
+		return;
+	}
+
+	// Audio is queued as it arrives from the console. A Wi-Fi stall or clock drift between the
+	// console and the Steam Deck would otherwise accumulate into permanent extra delay, so when
+	// the queue grows past this limit the stale audio is dropped and playback catches up.
+	unsigned int bytes_per_ms = rate * audio_out_sample_size / 1000;
+	audio_queue_max = std::max(4 * audio_buffer_size, 100 * bytes_per_ms);
+
+	SDL_PauseAudioDevice(audio_out, 0);
+
+	CHIAKI_LOGI(log.GetChiakiLog(), "Audio Device \"%s\" opened with SDL (%s) with %u channels @ %u Hz, device buffer %u samples (%u ms), max queue %u ms",
+			device_name ? device_name : "default", SDL_GetCurrentAudioDriver(), channels, rate,
+			(unsigned int)have.samples, (unsigned int)have.samples * 1000 / rate, audio_queue_max / bytes_per_ms);
+}
+
+void StreamSession::CloseAudio()
+{
+	if(!audio_out)
+		return;
+	SDL_CloseAudioDevice(audio_out);
+	audio_out = 0;
 }
 
 void StreamSession::PushAudioFrame(int16_t *buf, size_t samples_count)
 {
-	if(!audio_io)
+	if(!audio_out)
 		return;
-	audio_io->write((const char *)buf, static_cast<qint64>(samples_count * 2 * 2));
+
+	Uint32 queued = SDL_GetQueuedAudioSize(audio_out);
+	if(queued > audio_queue_max)
+	{
+		CHIAKI_LOGW(log.GetChiakiLog(), "Audio queue grew to %u bytes, dropping it to catch up with the stream", (unsigned int)queued);
+		SDL_ClearQueuedAudio(audio_out);
+	}
+
+	if(SDL_QueueAudio(audio_out, buf, (Uint32)(samples_count * audio_out_sample_size)) < 0)
+		CHIAKI_LOGE(log.GetChiakiLog(), "Failed to queue audio: %s", SDL_GetError());
 }
 
 void StreamSession::Event(ChiakiEvent *event)

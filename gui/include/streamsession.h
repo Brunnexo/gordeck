@@ -26,7 +26,6 @@
 #include <QMouseEvent>
 #include <QTimer>
 
-class QAudioOutput;
 class QIODevice;
 class QKeyEvent;
 class Settings;
@@ -102,10 +101,12 @@ class StreamSession : public QObject
 		ChiakiPiDecoder *pi_decoder;
 #endif
 
-		QAudioDeviceInfo audio_out_device_info;
-		unsigned int audio_buffer_size;
-		QAudioOutput *audio_output;
-		QIODevice *audio_io;
+		QString audio_out_device_name;
+		unsigned int audio_buffer_size; // bytes, see Settings::GetAudioBufferSize()
+		uint32_t audio_out; // SDL_AudioDeviceID, 0 when no device is open
+		unsigned int audio_out_sample_size; // bytes per sample frame (channels * 16 bit)
+		unsigned int audio_queue_max; // queued bytes beyond which stale audio is dropped
+		void CloseAudio();
 
 		QMap<Qt::Key, int> key_map;
 

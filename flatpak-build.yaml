@@ -98,6 +98,7 @@ modules:
       - -DSDL_KMSDRM=ON
       - -DSDL_RPATH=OFF
       - -DSDL_PIPEWIRE=OFF
+      - -DSDL_PULSEAUDIO=ON
     sources:
       - type: archive
         url: https://github.com/libsdl-org/SDL/releases/download/release-2.30.9/SDL2-2.30.9.tar.gz
