@@ -30,6 +30,16 @@
 
 **Shows the right buttons.** On-screen hints adapt to the controller you are using: Steam Deck, DualSense/DualShock or a generic gamepad.
 
+**Motion sensors.** The Steam Deck's gyroscope and accelerometer work like the DualSense's: aim by tilting the device and play titles that require motion. Wired controllers with sensors are recognized too.
+
+**Trackpads as touchpad.** The two trackpads form the DualSense touchpad: the left one is the left half, the right one is the right half, and clicking either of them is the touchpad click.
+
+**Vibration.** Gordeck receives the PS5's haptics and turns them into rumble, with adjustable intensity in the settings. On controllers with motors, such as the DualShock 4, it is strong; on the Steam Deck itself it is subtle, a limitation of the system.
+
+**Microphone.** The Steam Deck's microphone goes to the console: talk in party chat or use voice commands. It turns on by itself when the stream starts, and the **…** button toggles it, with both the button and the microphone configurable.
+
+**Stable picture and sound.** When the network drops packets, the picture holds the last good frame for an instant instead of filling with blocks, and the audio plays with low latency.
+
 **In your language.** The interface is available in English and Brazilian Portuguese, switchable in the settings.
 
 **Screen always on.** While streaming, the Steam Deck never dims the screen or goes to sleep while you play with the controller alone.
@@ -83,6 +93,7 @@ All files are on the [releases page](https://github.com/Brunnexo/gordeck/release
 | **Y** | O | Console options |
 | **≡** Menu | F1 | Settings |
 | **⧉** View | F3 | Automatic console discovery |
+| **…** Quick Access | M | Turn the microphone on or off (during the stream) |
 | Hold **home** for 7 s | — | End the stream |
 
 ## FAQ
@@ -95,6 +106,12 @@ It works best on the same Wi-Fi network. To play from outside, you need to confi
 
 **The controller does not respond in Gordeck.**
 Launch Gordeck through Steam (in Gaming Mode or as a non-Steam game). Outside Steam, the Steam Deck controller is not recognized by the app.
+
+**Vibration on the Steam Deck is weak.**
+It is a limitation of the path the system offers to applications: the Deck vibrates through the trackpad actuators, and the level the kernel allows is low. Raise "Vibration Intensity" in the settings; on controllers with motors the difference is big.
+
+**The microphone does not turn on.**
+In Settings, Stream page, check that "Microphone On at Start" is enabled and which "Microphone Button" is selected. If the **…** button opens the Steam menu without toggling the microphone, pick one of the back buttons, L4, L5, R4 or R5. With a keyboard, the M key always works.
 
 **I was already using Chiaki4deck. Do I lose my consoles?**
 No. The installer imports your registered consoles into Gordeck.

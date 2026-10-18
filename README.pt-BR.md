@@ -30,6 +30,16 @@ O **Gordeck** transmite os jogos do seu **PS5 ou PS4** para o **Steam Deck** pel
 
 **Mostra os botões certos.** As dicas na tela se adaptam ao controle que você está usando: Steam Deck, DualSense/DualShock ou controle genérico.
 
+**Sensores de movimento.** O giroscópio e o acelerômetro do Steam Deck funcionam como os do DualSense: mire inclinando o aparelho e jogue títulos que exigem movimento. Controles com sensores ligados por cabo também são reconhecidos.
+
+**Trackpads como touchpad.** Os dois trackpads formam o touchpad do DualSense: o esquerdo é a metade esquerda, o direito é a metade direita, e o clique de qualquer um deles é o clique do touchpad.
+
+**Vibração.** O Gordeck recebe a háptica do PS5 e a transforma em vibração, com intensidade ajustável nas configurações. Em controles com motores, como o DualShock 4, ela é forte; no próprio Steam Deck é discreta, por limitação do sistema.
+
+**Microfone.** O microfone do Steam Deck vai para o console: fale no chat de grupo ou use comandos de voz. Ele liga sozinho quando a transmissão começa e o botão **…** liga e desliga, com o botão e o microfone configuráveis.
+
+**Imagem e som estáveis.** Quando a rede perde pacotes, a imagem segura o último quadro bom por um instante em vez de se encher de blocos, e o áudio sai com latência baixa.
+
 **Em português.** Toda a interface está em português do Brasil, com o inglês disponível nas configurações.
 
 **Tela sempre acesa.** Durante a transmissão, o Steam Deck não apaga a tela nem entra em repouso enquanto você joga só com o controle.
@@ -83,6 +93,7 @@ Todos os arquivos estão na [página de downloads](https://github.com/Brunnexo/g
 | **Y** | O | Opções do console |
 | **≡** Menu | F1 | Configurações |
 | **⧉** View | F3 | Busca automática de consoles |
+| **…** Acesso rápido | M | Ligar ou desligar o microfone (durante a transmissão) |
 | Segurar **home** por 7 s | — | Encerrar a transmissão |
 
 ## Perguntas frequentes
@@ -95,6 +106,12 @@ Funciona melhor na mesma rede Wi-Fi. Para jogar de fora, é preciso configurar o
 
 **O controle não responde no Gordeck.**
 Abra o Gordeck pela Steam (no modo Jogo ou como jogo não-Steam). Fora da Steam, o controle do Steam Deck não é reconhecido pelo app.
+
+**A vibração no Steam Deck é fraca.**
+É uma limitação do caminho que o sistema oferece aos aplicativos: o Deck vibra pelos atuadores dos trackpads, e o nível que o kernel permite é baixo. Aumente "Intensidade da vibração" nas configurações; em controles com motores a diferença é grande.
+
+**O microfone não liga.**
+Confira em Configurações, página Stream, se "Microfone ligado ao iniciar" está ativo e qual é o "Botão do microfone". Se o botão **…** abrir o menu da Steam sem alternar o microfone, escolha um dos botões traseiros, L4, L5, R4 ou R5. Com teclado, a tecla M sempre funciona.
 
 **Já usava o Chiaki4deck. Perco meus consoles?**
 Não. O instalador importa os consoles registrados para o Gordeck.
