@@ -25,6 +25,15 @@
 
 #define DEG2RAD (2.0f * M_PI / 360.0f)
 
+// Steam Deck: the hid-steam kernel driver reports both trackpads inside the gamepad evdev device
+// (ABS_HAT0X/Y = left pad, ABS_HAT1X/Y = right pad, BTN_THUMB/BTN_THUMB2 = pad clicks), with (0, 0)
+// meaning "not touched". setsu presents them as one virtual touchpad the size of the DualSense's,
+// left pad on the left half and right pad on the right half.
+#define STEAM_DECK_VENDOR_ID 0x28de
+#define STEAM_DECK_PRODUCT_ID 0x1205
+#define DECK_PADS_WIDTH 1920
+#define DECK_PADS_HEIGHT 1080
+
 typedef struct setsu_avail_device_t
 {
 	struct setsu_avail_device_t *next;
@@ -67,6 +76,16 @@ typedef struct setsu_device_t
 			unsigned int slot_cur;
 			uint64_t buttons_prev;
 			uint64_t buttons_cur;
+
+			bool deck_pads; // Steam Deck trackpads, see DECK_PADS_WIDTH
+			int deck_raw_min, deck_raw_max; // range of the ABS_HAT* axes
+			struct
+			{
+				int raw_x, raw_y;
+				bool dirty;
+				bool clicked;
+			} deck_pad[2]; // 0 = left, 1 = right; they map to slots 0 and 1
+			int deck_next_tracking_id;
 		} touchpad;
 		struct
 		{
@@ -186,6 +205,8 @@ static bool is_device_interesting(struct udev_device *dev, SetsuDeviceType *type
 
 	const char *touchpad_str = udev_device_get_property_value(dev, "ID_INPUT_TOUCHPAD");
 	const char *accel_str = udev_device_get_property_value(dev, "ID_INPUT_ACCELEROMETER");
+	const char *joystick_str = udev_device_get_property_value(dev, "ID_INPUT_JOYSTICK");
+	bool deck_pads = false;
 	if(touchpad_str && !strcmp(touchpad_str, "1"))
 	{
 		// Filter mouse-device (/dev/input/mouse*) away and only keep the evdev (/dev/input/event*) one:
@@ -199,6 +220,15 @@ static bool is_device_interesting(struct udev_device *dev, SetsuDeviceType *type
 		if(!udev_device_get_property_value(dev, "ID_INPUT_WIDTH_MM"))
 			return false;
 		*type = SETSU_DEVICE_TYPE_MOTION;
+	}
+	else if(joystick_str && !strcmp(joystick_str, "1"))
+	{
+		// Steam Deck gamepad carrying the trackpads. Keep /dev/input/event*, drop /dev/input/js*.
+		const char *devnode = udev_device_get_devnode(dev);
+		if(!devnode || strncmp(devnode, "/dev/input/event", strlen("/dev/input/event")))
+			return false;
+		*type = SETSU_DEVICE_TYPE_TOUCHPAD;
+		deck_pads = true;
 	}
 	else
 		return false;
@@ -221,6 +251,9 @@ static bool is_device_interesting(struct udev_device *dev, SetsuDeviceType *type
 		if(!get_dev_ids(path, &vendor, &model))
 			return false;
 	}
+
+	if(deck_pads)
+		return vendor == STEAM_DECK_VENDOR_ID && model == STEAM_DECK_PRODUCT_ID;
 
 	for(const uint32_t *dev_id = device_ids; (char *)dev_id != ((char *)device_ids) + sizeof(device_ids); dev_id += 2)
 	{
@@ -339,10 +372,33 @@ SetsuDevice *setsu_connect(Setsu *setsu, const char *path, SetsuDeviceType type)
 	switch(type)
 	{
 		case SETSU_DEVICE_TYPE_TOUCHPAD:
-			dev->touchpad.min_x = libevdev_get_abs_minimum(dev->evdev, ABS_X);
-			dev->touchpad.min_y = libevdev_get_abs_minimum(dev->evdev, ABS_Y);
-			dev->touchpad.max_x = libevdev_get_abs_maximum(dev->evdev, ABS_X);
-			dev->touchpad.max_y = libevdev_get_abs_maximum(dev->evdev, ABS_Y);
+			dev->touchpad.deck_pads = libevdev_get_id_vendor(dev->evdev) == STEAM_DECK_VENDOR_ID
+				&& libevdev_get_id_product(dev->evdev) == STEAM_DECK_PRODUCT_ID
+				&& libevdev_has_event_code(dev->evdev, EV_ABS, ABS_HAT0X)
+				&& libevdev_has_event_code(dev->evdev, EV_ABS, ABS_HAT1X)
+				&& !libevdev_has_event_code(dev->evdev, EV_ABS, ABS_MT_SLOT);
+			if(dev->touchpad.deck_pads)
+			{
+				dev->touchpad.min_x = 0;
+				dev->touchpad.min_y = 0;
+				dev->touchpad.max_x = DECK_PADS_WIDTH;
+				dev->touchpad.max_y = DECK_PADS_HEIGHT;
+				dev->touchpad.deck_raw_min = libevdev_get_abs_minimum(dev->evdev, ABS_HAT0X);
+				dev->touchpad.deck_raw_max = libevdev_get_abs_maximum(dev->evdev, ABS_HAT0X);
+				if(dev->touchpad.deck_raw_max <= dev->touchpad.deck_raw_min)
+				{
+					dev->touchpad.deck_raw_min = -32767;
+					dev->touchpad.deck_raw_max = 32767;
+				}
+				SETSU_LOG("Steam Deck trackpads on %s mapped to a %dx%d touchpad\n", dev->path, DECK_PADS_WIDTH, DECK_PADS_HEIGHT);
+			}
+			else
+			{
+				dev->touchpad.min_x = libevdev_get_abs_minimum(dev->evdev, ABS_X);
+				dev->touchpad.min_y = libevdev_get_abs_minimum(dev->evdev, ABS_Y);
+				dev->touchpad.max_x = libevdev_get_abs_maximum(dev->evdev, ABS_X);
+				dev->touchpad.max_y = libevdev_get_abs_maximum(dev->evdev, ABS_Y);
+			}
 
 			for(size_t i=0; i<SLOTS_COUNT; i++)
 			{
@@ -522,6 +578,82 @@ static uint64_t button_from_evdev(int key)
 	}
 }
 
+static void deck_pads_event(SetsuDevice *dev, struct input_event *ev)
+{
+	switch(ev->type)
+	{
+		case EV_ABS:
+			switch(ev->code)
+			{
+				case ABS_HAT0X: dev->touchpad.deck_pad[0].raw_x = ev->value; dev->touchpad.deck_pad[0].dirty = true; break;
+				case ABS_HAT0Y: dev->touchpad.deck_pad[0].raw_y = ev->value; dev->touchpad.deck_pad[0].dirty = true; break;
+				case ABS_HAT1X: dev->touchpad.deck_pad[1].raw_x = ev->value; dev->touchpad.deck_pad[1].dirty = true; break;
+				case ABS_HAT1Y: dev->touchpad.deck_pad[1].raw_y = ev->value; dev->touchpad.deck_pad[1].dirty = true; break;
+			}
+			break;
+		case EV_KEY:
+			if(ev->code == BTN_THUMB)
+				dev->touchpad.deck_pad[0].clicked = ev->value != 0;
+			else if(ev->code == BTN_THUMB2)
+				dev->touchpad.deck_pad[1].clicked = ev->value != 0;
+			else
+				break;
+			// clicking either pad is the touchpad click
+			if(dev->touchpad.deck_pad[0].clicked || dev->touchpad.deck_pad[1].clicked)
+				dev->touchpad.buttons_cur |= SETSU_BUTTON_0;
+			else
+				dev->touchpad.buttons_cur &= ~SETSU_BUTTON_0;
+			break;
+	}
+}
+
+/*
+ * Turn the raw pad positions into slot state (slot 0 = left pad, slot 1 = right pad) so that the
+ * regular touchpad drain below emits TOUCH_DOWN/POSITION/UP for them.
+ */
+static void deck_pads_update_slots(SetsuDevice *dev)
+{
+	int raw_min = dev->touchpad.deck_raw_min;
+	int raw_range = dev->touchpad.deck_raw_max - raw_min;
+	int half_width = DECK_PADS_WIDTH / 2;
+	for(int i=0; i<2; i++)
+	{
+		if(!dev->touchpad.deck_pad[i].dirty)
+			continue;
+		dev->touchpad.deck_pad[i].dirty = false;
+		int raw_x = dev->touchpad.deck_pad[i].raw_x;
+		int raw_y = dev->touchpad.deck_pad[i].raw_y;
+		bool touched = raw_x != 0 || raw_y != 0; // hid-steam reports exactly (0, 0) while the pad is not touched
+		if(touched)
+		{
+			if(dev->touchpad.slots[i].tracking_id == -1)
+			{
+				dev->touchpad.slots[i].tracking_id = dev->touchpad.deck_next_tracking_id;
+				dev->touchpad.deck_next_tracking_id = (dev->touchpad.deck_next_tracking_id + 1) & 0x7fff;
+				dev->touchpad.slots[i].downed = true;
+				dev->touchpad.slots[i].pos_dirty = true;
+			}
+			// pad range -> its half of the virtual touchpad. The kernel reports y growing upwards,
+			// the DualSense touchpad has y growing downwards, so the vertical axis is flipped.
+			int x = (int)((int64_t)(raw_x - raw_min) * (half_width - 1) / raw_range) + i * half_width;
+			int y = (int)((int64_t)(dev->touchpad.deck_raw_max - raw_y) * (DECK_PADS_HEIGHT - 1) / raw_range);
+			if(x != dev->touchpad.slots[i].x || y != dev->touchpad.slots[i].y)
+			{
+				dev->touchpad.slots[i].x = x;
+				dev->touchpad.slots[i].y = y;
+				dev->touchpad.slots[i].pos_dirty = true;
+			}
+		}
+		else if(dev->touchpad.slots[i].tracking_id != -1)
+		{
+			dev->touchpad.slots[i].tracking_id_prev = dev->touchpad.slots[i].tracking_id;
+			dev->touchpad.slots[i].tracking_id = -1;
+			dev->touchpad.slots[i].downed = false;
+			dev->touchpad.slots[i].pos_dirty = false;
+		}
+	}
+}
+
 static void device_event(Setsu *setsu, SetsuDevice *dev, struct input_event *ev, SetsuEventCb cb, void *user)
 {
 #if 0
@@ -538,6 +670,11 @@ static void device_event(Setsu *setsu, SetsuDevice *dev, struct input_event *ev,
 	switch(dev->type)
 	{
 		case SETSU_DEVICE_TYPE_TOUCHPAD:
+			if(dev->touchpad.deck_pads)
+			{
+				deck_pads_event(dev, ev);
+				break;
+			}
 			switch(ev->type)
 			{
 				case EV_ABS:
@@ -640,6 +777,8 @@ static void device_drain(Setsu *setsu, SetsuDevice *dev, SetsuEventCb cb, void *
 	switch(dev->type)
 	{
 		case SETSU_DEVICE_TYPE_TOUCHPAD:
+			if(dev->touchpad.deck_pads)
+				deck_pads_update_slots(dev);
 			for(size_t i=0; i<SLOTS_COUNT; i++)
 			{
 				if(dev->touchpad.slots[i].tracking_id_prev != -1)
