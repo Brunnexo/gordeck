@@ -43,6 +43,21 @@ Swap the image for `debian:12`, `registry.fedoraproject.org/fedora:41` or `archl
 
 `add-to-steam.py` modifies Steam's `shortcuts.vdf`, so Steam must be closed. Useful options: `--dry-run`, `--remove`, `--remove-legacy` (removes Chiaki4deck shortcuts) and `--steam-dir` (to test against a copy of the Steam folder).
 
+## Controller, sensors and audio on the Steam Deck
+
+Rules the code relies on that are not obvious at first sight:
+
+- **Never open the Deck controller's hidraw node** (`28de:1205`). The kernel's `hid-steam` driver removes the "Steam Deck" evdev gamepad, which is what SDL uses, as soon as any process opens the node. That is why `controllermanager.cpp` disables SDL's HID driver for the Deck with the `SDL_JOYSTICK_HIDAPI_STEAMDECK=0` hint, and nothing in the app talks to the controller over hidraw.
+- **Motion sensors** come from the "Steam Deck Motion Sensors" evdev device, which the kernel publishes in the same layout as the DualShock. `setsu` accepts it by Valve's ID and the session treats it like any controller with a gyroscope. Controllers with sensors seen by SDL go through `Controller::HandleSensorEvent`.
+- **Trackpads** come from the evdev gamepad: HAT0 axes (left) and HAT1 (right), clicks on BTN_THUMB and BTN_THUMB2, and (0, 0) means "not touched". `setsu` presents them as a 1920x1080 virtual touchpad, each pad on one half, with Y flipped.
+- **Deck buttons in SDL:** `misc1` is the "…", `paddle1` is R4, `paddle2` is L4, `paddle3` is R5 and `paddle4` is L5. The microphone button in the settings is chosen from these names.
+- **Video:** `videoreceiver.c` never hands the decoder a frame whose FEC failed; it requests an IDR, skips P-frames until the IDR arrives and tracks the last 16 reference frames (`bitstream.c`, from chiaki-ng, and `vl_rbsp.h`, from Mesa, MIT license). `ffmpegdecoder.c` drops frames FFmpeg flagged as corrupt.
+- **Audio output** uses SDL (`SDL_QueueAudio`), with a 20 ms default buffer and the backlog dropped above 100 ms. The Flatpak builds SDL with the PulseAudio backend; SDL 2.30's PipeWire backend does not build against the SDK's PipeWire 1.4.
+- **Vibration:** the session always presents itself to the console as a DualSense (`enable_dualsense`), because without the CONTROLLERCONNECTION message the PS5 does not vibrate anything. The PS5 then sends its haptics as 3 kHz PCM, routed to `haptics_sink`, and `StreamSession::PushHapticsFrame` turns them into rumble. On the Deck the vibration is weak because the kernel uses the firmware's lowest intensity level, and changing that would require hidraw.
+- **Microphone:** SDL capture at 48 kHz stereo in 10 ms frames, `opusencoder.c` encodes, `audiosender.c` builds the packets and `chiaki_takion_send_mic_packet` sends them. The console needs the input STREAMINFO (`stream_connection_enable_microphone`) and the control messages 0x30 (connect) and 0x36 (mute).
+
+In a session log, the lines that confirm each part: `Takion socket receive buffer`, `Connected Setsu Motion Device`, `Connected Setsu Touchpad Device`, `announcing controller as DualSense`, `enabling microphone input`, `Microphone ... opened with SDL`, `Received IDR frame`.
+
 ## Translations
 
 The interface strings live in `gui/i18n/` and are embedded into the executable at build time. After changing strings in the code, update the translation file and fill in the new entries:
