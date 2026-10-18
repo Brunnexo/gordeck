@@ -78,6 +78,9 @@ typedef struct chiaki_connect_info_t
 	ChiakiConnectVideoProfile video_profile;
 	bool video_profile_auto_downgrade; // Downgrade video_profile if server does not seem to support it.
 	bool enable_keyboard;
+	// Present ourselves to the console as a DualSense. The PS5 then sends its haptics as a
+	// PCM stream (delivered to the haptics sink) instead of classic rumble messages.
+	bool enable_dualsense;
 } ChiakiConnectInfo;
 
 
@@ -170,6 +173,7 @@ typedef struct chiaki_session_t
 		ChiakiConnectVideoProfile video_profile;
 		bool video_profile_auto_downgrade;
 		bool enable_keyboard;
+		bool enable_dualsense;
 	} connect_info;
 
 	ChiakiTarget target;
@@ -191,6 +195,7 @@ typedef struct chiaki_session_t
 	ChiakiVideoSampleCallback video_sample_cb;
 	void *video_sample_cb_user;
 	ChiakiAudioSink audio_sink;
+	ChiakiAudioSink haptics_sink; // raw PCM haptics of the PS5 (16 bit stereo @ 3 kHz), only with enable_dualsense
 
 	ChiakiThread session_thread;
 
@@ -222,6 +227,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_session_join(ChiakiSession *session);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_set_controller_state(ChiakiSession *session, ChiakiControllerState *state);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_set_login_pin(ChiakiSession *session, const uint8_t *pin, size_t pin_size);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_goto_bed(ChiakiSession *session);
+CHIAKI_EXPORT ChiakiErrorCode chiaki_session_connect_microphone(ChiakiSession *session);
+CHIAKI_EXPORT ChiakiErrorCode chiaki_session_set_microphone_muted(ChiakiSession *session, bool muted);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_keyboard_set_text(ChiakiSession *session, const char *text);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_keyboard_reject(ChiakiSession *session);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_keyboard_accept(ChiakiSession *session);
@@ -244,6 +251,11 @@ static inline void chiaki_session_set_video_sample_cb(ChiakiSession *session, Ch
 static inline void chiaki_session_set_audio_sink(ChiakiSession *session, ChiakiAudioSink *sink)
 {
 	session->audio_sink = *sink;
+}
+
+static inline void chiaki_session_set_haptics_sink(ChiakiSession *session, ChiakiAudioSink *sink)
+{
+	session->haptics_sink = *sink;
 }
 
 #ifdef __cplusplus

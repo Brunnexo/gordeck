@@ -36,6 +36,10 @@ class SettingsDialog : public QDialog
 
 		QAbstractButton *log_verbose_toggle;
 		QComboBox *disconnect_action_combo_box;
+		QComboBox *rumble_intensity_combo_box;
+		QComboBox *audio_in_device_combo_box;
+		QAbstractButton *mic_auto_start_toggle;
+		QComboBox *mic_toggle_button_combo_box;
 
 		QComboBox *resolution_combo_box;
 		QComboBox *fps_combo_box;
@@ -57,6 +61,8 @@ class SettingsDialog : public QDialog
 		void LanguageSelected();
 		void LogVerboseChanged();
 		void DisconnectActionSelected();
+		void RumbleIntensitySelected();
+		void MicToggleButtonSelected();
 
 		void ResolutionSelected();
 		void FPSSelected();

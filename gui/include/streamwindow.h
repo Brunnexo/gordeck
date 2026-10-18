@@ -29,11 +29,14 @@ class StreamWindow: public QMainWindow
 
 		// countdown shown while the PS/home button is held to force-quit
 		QLabel *home_hold_label;
+		QLabel *mic_label;
+		QTimer *mic_label_timer;
 		QTimer *home_hold_update_timer;
 		QElapsedTimer home_hold_elapsed;
 		bool force_quit;
 
 		void UpdateHomeHoldLabel();
+		void MicMutedChanged(bool muted);
 
 		void Init();
 		void UpdateVideoTransform();

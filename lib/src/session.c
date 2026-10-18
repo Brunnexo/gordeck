@@ -227,6 +227,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_session_init(ChiakiSession *session, Chiaki
 	session->connect_info.video_profile = connect_info->video_profile;
 	session->connect_info.video_profile_auto_downgrade = connect_info->video_profile_auto_downgrade;
 	session->connect_info.enable_keyboard = connect_info->enable_keyboard;
+	session->connect_info.enable_dualsense = connect_info->enable_dualsense;
+	memset(&session->haptics_sink, 0, sizeof(session->haptics_sink));
 
 	return CHIAKI_ERR_SUCCESS;
 error_stop_pipe:
@@ -825,6 +827,16 @@ static ChiakiErrorCode session_thread_request_session(ChiakiSession *session, Ch
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_goto_bed(ChiakiSession *session)
 {
 	return chiaki_ctrl_goto_bed(&session->ctrl);
+}
+
+CHIAKI_EXPORT ChiakiErrorCode chiaki_session_connect_microphone(ChiakiSession *session)
+{
+	return chiaki_ctrl_connect_microphone(&session->ctrl);
+}
+
+CHIAKI_EXPORT ChiakiErrorCode chiaki_session_set_microphone_muted(ChiakiSession *session, bool muted)
+{
+	return chiaki_ctrl_set_microphone_muted(&session->ctrl, muted);
 }
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_keyboard_set_text(ChiakiSession *session, const char *text)

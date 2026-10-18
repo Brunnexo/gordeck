@@ -185,6 +185,63 @@ void Settings::SetDecoder(Decoder decoder)
 	settings.setValue("settings/decoder", decoder_values[decoder]);
 }
 
+static const QMap<RumbleIntensity, QString> rumble_intensity_values = {
+	{ RumbleIntensity::Weak, "weak" },
+	{ RumbleIntensity::Normal, "normal" },
+	{ RumbleIntensity::Strong, "strong" },
+	{ RumbleIntensity::VeryStrong, "verystrong" },
+	{ RumbleIntensity::Maximum, "max" }
+};
+
+static const RumbleIntensity rumble_intensity_default = RumbleIntensity::VeryStrong;
+
+RumbleIntensity Settings::GetRumbleIntensity() const
+{
+	auto v = settings.value("settings/rumble_intensity", rumble_intensity_values[rumble_intensity_default]).toString();
+	return rumble_intensity_values.key(v, rumble_intensity_default);
+}
+
+void Settings::SetRumbleIntensity(RumbleIntensity intensity)
+{
+	settings.setValue("settings/rumble_intensity", rumble_intensity_values[intensity]);
+}
+
+static const QMap<MicToggleButton, QString> mic_toggle_button_values = {
+	{ MicToggleButton::None, "none" },
+	{ MicToggleButton::QuickAccess, "quickaccess" },
+	{ MicToggleButton::L4, "l4" },
+	{ MicToggleButton::L5, "l5" },
+	{ MicToggleButton::R4, "r4" },
+	{ MicToggleButton::R5, "r5" },
+	{ MicToggleButton::L4AndL5, "l4l5" }
+};
+
+static const MicToggleButton mic_toggle_button_default = MicToggleButton::QuickAccess;
+
+MicToggleButton Settings::GetMicToggleButton() const
+{
+	auto v = settings.value("settings/mic_toggle_button", mic_toggle_button_values[mic_toggle_button_default]).toString();
+	return mic_toggle_button_values.key(v, mic_toggle_button_default);
+}
+
+void Settings::SetMicToggleButton(MicToggleButton button)
+{
+	settings.setValue("settings/mic_toggle_button", mic_toggle_button_values[button]);
+}
+
+float Settings::GetRumbleMultiplier() const
+{
+	switch(GetRumbleIntensity())
+	{
+		case RumbleIntensity::Weak: return 0.5f;
+		case RumbleIntensity::Normal: return 1.0f;
+		case RumbleIntensity::Strong: return 2.0f;
+		case RumbleIntensity::VeryStrong: return 4.0f;
+		case RumbleIntensity::Maximum: return 8.0f;
+	}
+	return 1.0f;
+}
+
 QString Settings::GetHardwareDecoder() const
 {
 	return settings.value("settings/hw_decoder").toString();
@@ -204,6 +261,16 @@ unsigned int Settings::GetAudioBufferSize() const
 QString Settings::GetAudioOutDevice() const
 {
 	return settings.value("settings/audio_out_device").toString();
+}
+
+QString Settings::GetAudioInDevice() const
+{
+	return settings.value("settings/audio_in_device").toString();
+}
+
+void Settings::SetAudioInDevice(QString device_name)
+{
+	settings.setValue("settings/audio_in_device", device_name);
 }
 
 void Settings::SetAudioOutDevice(QString device_name)

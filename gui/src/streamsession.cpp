@@ -13,10 +13,16 @@
 #include <algorithm>
 
 #include <cstring>
+#include <cstdlib>
 
 #include <chiaki/session.h>
 
 #define SETSU_UPDATE_INTERVAL_MS 4
+// haptics-derived rumble: one haptics packet is 10 ms, rumble is refreshed every 3 packets
+#define RUMBLE_HAPTICS_PACKETS_PER_RUMBLE 3
+#define RUMBLE_HAPTICS_INTERVAL_MS (RUMBLE_HAPTICS_PACKETS_PER_RUMBLE * 10)
+// average amplitude (0..65535 scale) below which a haptics packet counts as silence
+#define HAPTIC_RUMBLE_MIN_STRENGTH 100
 // DualSense is 1919 x 1079, DualShock4 is 1920 x 942 (take highest of both here to map completely to both)
 #define PS_TOUCHPAD_MAX_X 1920
 #define PS_TOUCHPAD_MAX_Y 1079
@@ -28,6 +34,9 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(Settings *settings, ChiakiTar
 	decoder = settings->GetDecoder();
 	hw_decoder = settings->GetHardwareDecoder();
 	audio_out_device = settings->GetAudioOutDevice();
+	audio_in_device = settings->GetAudioInDevice();
+	mic_auto_start = settings->GetMicAutoStart();
+	mic_toggle_button = settings->GetMicToggleButton();
 	log_level_mask = settings->GetLogLevelMask();
 	log_file = CreateLogFilename();
 	video_profile = settings->GetVideoProfile();
@@ -37,6 +46,7 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(Settings *settings, ChiakiTar
 	this->morning = morning;
 	this->initial_login_pin = initial_login_pin;
 	audio_buffer_size = settings->GetAudioBufferSize();
+	rumble_multiplier = settings->GetRumbleMultiplier();
 	this->fullscreen = fullscreen;
 	this->zoom = zoom;
 	this->stretch = stretch;
@@ -45,6 +55,7 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(Settings *settings, ChiakiTar
 
 static void AudioSettingsCb(uint32_t channels, uint32_t rate, void *user);
 static void AudioFrameCb(int16_t *buf, size_t samples_count, void *user);
+static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user);
 static void EventCb(ChiakiEvent *event, void *user);
 #if CHIAKI_GUI_ENABLE_SETSU
 static void SessionSetsuCb(SetsuEvent *event, void *user);
@@ -58,6 +69,11 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 #if CHIAKI_LIB_ENABLE_PI_DECODER
 	pi_decoder(nullptr),
 #endif
+	audio_in(0),
+	mic_connected(false),
+	mic_muted(true),
+	allow_unmute(false),
+	mic_buf_fill(0),
 	audio_out(0),
 	audio_out_sample_size(0),
 	audio_queue_max(0)
@@ -102,9 +118,14 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 #endif
 
 	audio_out_device_name = connect_info.audio_out_device;
+	audio_in_device_name = connect_info.audio_in_device;
+	mic_auto_start = connect_info.mic_auto_start;
+	mic_toggle_button = connect_info.mic_toggle_button;
+	chiaki_opus_encoder_init(&opus_encoder, log.GetChiakiLog());
 
 	chiaki_opus_decoder_init(&opus_decoder, log.GetChiakiLog());
 	audio_buffer_size = connect_info.audio_buffer_size;
+	rumble_multiplier = connect_info.rumble_multiplier;
 
 	QByteArray host_str = connect_info.host.toUtf8();
 
@@ -114,6 +135,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 	chiaki_connect_info.video_profile = connect_info.video_profile;
 	chiaki_connect_info.video_profile_auto_downgrade = true;
 	chiaki_connect_info.enable_keyboard = false;
+	// Always talk to the console as a DualSense: on the PS5 that is the only way to get any
+	// vibration at all (as a haptics stream, converted to rumble below). The PS4 ignores it.
+	chiaki_connect_info.enable_dualsense = true;
 
 #if CHIAKI_LIB_ENABLE_PI_DECODER
 	if(connect_info.decoder == Decoder::Pi && chiaki_connect_info.video_profile.codec != CHIAKI_CODEC_H264)
@@ -144,6 +168,20 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 	ChiakiAudioSink audio_sink;
 	chiaki_opus_decoder_get_sink(&opus_decoder, &audio_sink);
 	chiaki_session_set_audio_sink(&session, &audio_sink);
+
+	// microphone format the console expects: stereo 16 bit, 48 kHz, 10 ms frames
+	ChiakiAudioHeader mic_header;
+	chiaki_audio_header_set(&mic_header, 2, 16, 48000, MICROPHONE_SAMPLES);
+	chiaki_opus_encoder_header(&mic_header, &opus_encoder, &session);
+
+	ChiakiAudioSink haptics_sink = {};
+	haptics_sink.user = this;
+	haptics_sink.frame_cb = HapticsFrameCb;
+	chiaki_session_set_haptics_sink(&session, &haptics_sink);
+	rumble_haptics_on = false;
+	auto rumble_haptics_timer = new QTimer(this);
+	connect(rumble_haptics_timer, &QTimer::timeout, this, &StreamSession::ApplyRumbleHaptics);
+	rumble_haptics_timer->start(RUMBLE_HAPTICS_INTERVAL_MS);
 
 #if CHIAKI_LIB_ENABLE_PI_DECODER
 	if(pi_decoder)
@@ -188,10 +226,12 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 
 StreamSession::~StreamSession()
 {
+	CloseMic(); // before join: the capture callback sends into the session
 	chiaki_session_join(&session);
 	chiaki_session_fini(&session);
 	CloseAudio(); // only after join: the session thread is what pushes audio
 	chiaki_opus_decoder_fini(&opus_decoder);
+	chiaki_opus_encoder_fini(&opus_encoder);
 #if CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 	for(auto controller : controllers)
 		delete controller;
@@ -282,6 +322,11 @@ void StreamSession::HandleMouseMoveEvent(QMouseEvent *event, float width, float 
 
 void StreamSession::HandleKeyboardEvent(QKeyEvent *event)
 {
+	if(event->key() == Qt::Key_M && event->type() == QEvent::KeyPress && !event->isAutoRepeat())
+	{
+		ToggleMute();
+		return;
+	}
 	if(key_map.contains(Qt::Key(event->key())) == false)
 		return;
 
@@ -420,6 +465,7 @@ void StreamSession::UpdateGamepads()
 			}
 			CHIAKI_LOGI(log.GetChiakiLog(), "Controller %d opened: \"%s\"", controller_id, controller->GetName().toLocal8Bit().constData());
 			connect(controller, &Controller::StateChanged, this, &StreamSession::SendFeedbackState);
+			connect(controller, &Controller::SdlButtonPressed, this, &StreamSession::HandleControllerButtonForMic);
 			controllers[controller_id] = controller;
 		}
 	}
@@ -473,6 +519,10 @@ void StreamSession::SendFeedbackState()
 
 void StreamSession::InitAudio(unsigned int channels, unsigned int rate)
 {
+	bool first_time = !allow_unmute;
+	allow_unmute = true; // the audio header means the stream is up, the console can take a microphone now
+	if(first_time && mic_auto_start && mic_muted)
+		QTimer::singleShot(500, this, &StreamSession::ToggleMute); // let the control channel settle first
 	CloseAudio();
 
 	if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
@@ -521,6 +571,207 @@ void StreamSession::InitAudio(unsigned int channels, unsigned int rate)
 			(unsigned int)have.samples, (unsigned int)have.samples * 1000 / rate, audio_queue_max / bytes_per_ms);
 }
 
+void StreamSession::PushHapticsFrame(uint8_t *buf, size_t buf_size)
+{
+	// 16-bit stereo PCM at 3 kHz, 120 bytes per 10 ms packet
+	const size_t sample_size = 2 * sizeof(int16_t);
+	if(buf_size < sample_size || (buf_size % sample_size) != 0)
+	{
+		CHIAKI_LOGW(log.GetChiakiLog(), "Haptics packet with invalid size %zu", buf_size);
+		return;
+	}
+
+	// mean absolute amplitude per channel, doubled to use the full 16-bit range
+	uint32_t suml = 0, sumr = 0;
+	size_t count = buf_size / sample_size;
+	for(size_t i=0; i<count; i++)
+	{
+		int16_t l, r;
+		memcpy(&l, buf + i * sample_size, sizeof(int16_t));
+		memcpy(&r, buf + i * sample_size + sizeof(int16_t), sizeof(int16_t));
+		suml += (uint32_t)abs(l) * 2;
+		sumr += (uint32_t)abs(r) * 2;
+	}
+	uint32_t left = suml / count;
+	uint32_t right = sumr / count;
+	if(left <= HAPTIC_RUMBLE_MIN_STRENGTH)
+		left = 0;
+	if(right <= HAPTIC_RUMBLE_MIN_STRENGTH)
+		right = 0;
+	uint16_t strength = ScaleRumble(left > right ? left : right);
+
+	QMutexLocker locker(&rumble_haptics_mutex);
+	rumble_haptics.enqueue(strength);
+	while(rumble_haptics.size() > 2 * RUMBLE_HAPTICS_PACKETS_PER_RUMBLE) // never let a backlog add latency
+		rumble_haptics.dequeue();
+}
+
+// Applies the user's intensity multiplier and clamps to 16 bit. Values just above zero are
+// raised to a floor, because some controllers shift the strength down to 7 bits and would
+// otherwise ignore them.
+uint16_t StreamSession::ScaleRumble(uint32_t strength)
+{
+	if(strength == 0)
+		return 0;
+	float scaled = (float)strength * rumble_multiplier;
+	if(scaled > (float)UINT16_MAX)
+		scaled = (float)UINT16_MAX;
+	uint32_t result = (uint32_t)scaled;
+	if(result < (1 << 9))
+		result = 1 << 9;
+	return (uint16_t)result;
+}
+
+void StreamSession::ApplyRumbleHaptics()
+{
+	uint32_t strength = 0;
+	bool got_any = false;
+	{
+		QMutexLocker locker(&rumble_haptics_mutex);
+		for(size_t i=0; i<RUMBLE_HAPTICS_PACKETS_PER_RUMBLE && !rumble_haptics.isEmpty(); i++)
+		{
+			strength += rumble_haptics.dequeue();
+			got_any = true;
+		}
+	}
+	strength /= RUMBLE_HAPTICS_PACKETS_PER_RUMBLE;
+	if(!got_any && !rumble_haptics_on)
+		return;
+	// keep refreshing while rumbling, and send one final zero to stop
+	for(auto controller : controllers)
+		controller->SetRumble16((uint16_t)strength, (uint16_t)strength);
+	rumble_haptics_on = strength > 0;
+}
+
+void StreamSession::InitMic()
+{
+	CloseMic();
+
+	if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
+	{
+		CHIAKI_LOGE(log.GetChiakiLog(), "Failed to initialize SDL audio for the microphone: %s", SDL_GetError());
+		return;
+	}
+
+	mic_buf_fill = 0;
+
+	SDL_AudioSpec want = {};
+	want.freq = 48000;
+	want.channels = 2;
+	want.format = AUDIO_S16SYS;
+	want.samples = MICROPHONE_SAMPLES;
+	want.userdata = this;
+	want.callback = [](void *userdata, Uint8 *stream, int len) {
+		static_cast<StreamSession *>(userdata)->QueueMicData(stream, (size_t)len);
+	};
+
+	SDL_AudioSpec have = {};
+	QByteArray device_name_utf8 = audio_in_device_name.toUtf8();
+	const char *device_name = audio_in_device_name.isEmpty() ? nullptr : device_name_utf8.constData();
+	audio_in = SDL_OpenAudioDevice(device_name, 1, &want, &have, 0);
+	if(!audio_in && device_name)
+	{
+		CHIAKI_LOGW(log.GetChiakiLog(), "Failed to open Microphone \"%s\" (%s), falling back to the default one",
+				device_name, SDL_GetError());
+		device_name = nullptr;
+		audio_in = SDL_OpenAudioDevice(nullptr, 1, &want, &have, 0);
+	}
+	if(!audio_in)
+	{
+		CHIAKI_LOGE(log.GetChiakiLog(), "Failed to open default Microphone: %s", SDL_GetError());
+		return;
+	}
+
+	CHIAKI_LOGI(log.GetChiakiLog(), "Microphone \"%s\" opened with SDL (%s), %u channels @ %u Hz, buffer %u samples",
+			device_name ? device_name : "default", SDL_GetCurrentAudioDriver(),
+			(unsigned int)have.channels, (unsigned int)have.freq, (unsigned int)have.samples);
+}
+
+void StreamSession::CloseMic()
+{
+	if(!audio_in)
+		return;
+	SDL_CloseAudioDevice(audio_in);
+	audio_in = 0;
+}
+
+// SDL capture thread: collect exactly one Opus frame of stereo samples, then encode and send
+void StreamSession::QueueMicData(const uint8_t *data, size_t size)
+{
+	const size_t frame_bytes = sizeof(mic_buf);
+	while(size > 0)
+	{
+		size_t n = std::min(size, frame_bytes - mic_buf_fill);
+		memcpy(reinterpret_cast<uint8_t *>(mic_buf) + mic_buf_fill, data, n);
+		mic_buf_fill += n;
+		data += n;
+		size -= n;
+		if(mic_buf_fill == frame_bytes)
+		{
+			chiaki_opus_encoder_frame(mic_buf, &opus_encoder);
+			mic_buf_fill = 0;
+		}
+	}
+}
+
+void StreamSession::HandleControllerButtonForMic(int sdl_button)
+{
+#if defined(CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER) && SDL_VERSION_ATLEAST(2, 0, 14)
+	// SDL names for the Steam Deck: misc1 = "...", paddle1 = R4, paddle2 = L4, paddle3 = R5, paddle4 = L5
+	int wanted = -1;
+	switch(mic_toggle_button)
+	{
+		case MicToggleButton::QuickAccess: wanted = SDL_CONTROLLER_BUTTON_MISC1; break;
+		case MicToggleButton::L4: wanted = SDL_CONTROLLER_BUTTON_PADDLE2; break;
+		case MicToggleButton::L5: wanted = SDL_CONTROLLER_BUTTON_PADDLE4; break;
+		case MicToggleButton::R4: wanted = SDL_CONTROLLER_BUTTON_PADDLE1; break;
+		case MicToggleButton::R5: wanted = SDL_CONTROLLER_BUTTON_PADDLE3; break;
+		case MicToggleButton::L4AndL5: {
+			// pressing one left back button while the other is held
+			if(sdl_button != SDL_CONTROLLER_BUTTON_PADDLE2 && sdl_button != SDL_CONTROLLER_BUTTON_PADDLE4)
+				return;
+			auto controller = qobject_cast<Controller *>(sender());
+			int other = sdl_button == SDL_CONTROLLER_BUTTON_PADDLE2 ? SDL_CONTROLLER_BUTTON_PADDLE4 : SDL_CONTROLLER_BUTTON_PADDLE2;
+			if(controller && controller->IsSdlButtonPressed(other))
+				ToggleMute();
+			return;
+		}
+		case MicToggleButton::None:
+			return;
+	}
+	if(sdl_button == wanted)
+		ToggleMute();
+#else
+	Q_UNUSED(sdl_button);
+#endif
+}
+
+void StreamSession::ToggleMute()
+{
+	if(!allow_unmute)
+	{
+		CHIAKI_LOGI(log.GetChiakiLog(), "Microphone can only be switched once the stream is running");
+		return;
+	}
+	if(!mic_connected)
+	{
+		InitMic();
+		if(!audio_in)
+		{
+			CHIAKI_LOGE(log.GetChiakiLog(), "Microphone initialization failed, it stays muted");
+			return;
+		}
+		chiaki_session_connect_microphone(&session);
+		mic_connected = true;
+	}
+	mic_muted = !mic_muted;
+	chiaki_session_set_microphone_muted(&session, mic_muted);
+	if(audio_in)
+		SDL_PauseAudioDevice(audio_in, mic_muted ? 1 : 0);
+	CHIAKI_LOGI(log.GetChiakiLog(), "Microphone %s", mic_muted ? "muted" : "unmuted");
+	emit MicMutedChanged(mic_muted);
+}
+
 void StreamSession::CloseAudio()
 {
 	if(!audio_out)
@@ -562,9 +813,13 @@ void StreamSession::Event(ChiakiEvent *event)
 		case CHIAKI_EVENT_RUMBLE: {
 			uint8_t left = event->rumble.left;
 			uint8_t right = event->rumble.right;
-			QMetaObject::invokeMethod(this, [this, left, right]() {
+			CHIAKI_LOGV(GetChiakiLog(), "Rumble from console: left %u, right %u, forwarding to %d controller(s)",
+					(unsigned int)left, (unsigned int)right, controllers.size());
+			uint16_t left16 = ScaleRumble((uint32_t)left << 8);
+			uint16_t right16 = ScaleRumble((uint32_t)right << 8);
+			QMetaObject::invokeMethod(this, [this, left16, right16]() {
 				for(auto controller : controllers)
-					controller->SetRumble(left, right);
+					controller->SetRumble16(left16, right16);
 			});
 			break;
 		}
@@ -694,6 +949,7 @@ class StreamSessionPrivate
 		}
 
 		static void PushAudioFrame(StreamSession *session, int16_t *buf, size_t samples_count)	{ session->PushAudioFrame(buf, samples_count); }
+		static void PushHapticsFrame(StreamSession *session, uint8_t *buf, size_t buf_size)		{ session->PushHapticsFrame(buf, buf_size); }
 		static void Event(StreamSession *session, ChiakiEvent *event)							{ session->Event(event); }
 #if CHIAKI_GUI_ENABLE_SETSU
 		static void HandleSetsuEvent(StreamSession *session, SetsuEvent *event)					{ session->HandleSetsuEvent(event); }
@@ -711,6 +967,12 @@ static void AudioFrameCb(int16_t *buf, size_t samples_count, void *user)
 {
 	auto session = reinterpret_cast<StreamSession *>(user);
 	StreamSessionPrivate::PushAudioFrame(session, buf, samples_count);
+}
+
+static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
+{
+	auto session = reinterpret_cast<StreamSession *>(user);
+	StreamSessionPrivate::PushHapticsFrame(session, buf, buf_size);
 }
 
 static void EventCb(ChiakiEvent *event, void *user)

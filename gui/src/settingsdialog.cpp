@@ -217,6 +217,57 @@ SettingsDialog::SettingsDialog(Settings *settings, HintStyle hint_style, QWidget
 	}
 	stream_page->addWidget(CreateRow(tr("Audio Output Device"), tr("Where the sound of the console is played."), audio_device_combo_box));
 
+	audio_in_device_combo_box = new QComboBox(this);
+	audio_in_device_combo_box->addItem(tr("Auto"), QString());
+	if(SDL_InitSubSystem(SDL_INIT_AUDIO) == 0)
+	{
+		auto current_audio_in_device = settings->GetAudioInDevice();
+		int devices_count = SDL_GetNumAudioDevices(1);
+		for(int i=0; i<devices_count; i++)
+		{
+			QString name = QString::fromUtf8(SDL_GetAudioDeviceName(i, 1));
+			audio_in_device_combo_box->addItem(name, name);
+		}
+		int index = audio_in_device_combo_box->findData(current_audio_in_device);
+		if(index < 0 && !current_audio_in_device.isEmpty())
+		{
+			audio_in_device_combo_box->addItem(current_audio_in_device, current_audio_in_device);
+			index = audio_in_device_combo_box->count() - 1;
+		}
+		audio_in_device_combo_box->setCurrentIndex(index < 0 ? 0 : index);
+	}
+	connect(audio_in_device_combo_box, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]() {
+		this->settings->SetAudioInDevice(audio_in_device_combo_box->currentData().toString());
+	});
+	stream_page->addWidget(CreateRow(tr("Microphone"), tr("Which microphone is sent to the console."), audio_in_device_combo_box));
+
+	mic_toggle_button_combo_box = new QComboBox(this);
+	QList<QPair<MicToggleButton, const char *>> mic_toggle_button_strings = {
+		{ MicToggleButton::QuickAccess, QT_TR_NOOP("Quick Access (\u2026)")},
+		{ MicToggleButton::L4, QT_TR_NOOP("L4")},
+		{ MicToggleButton::L5, QT_TR_NOOP("L5")},
+		{ MicToggleButton::R4, QT_TR_NOOP("R4")},
+		{ MicToggleButton::R5, QT_TR_NOOP("R5")},
+		{ MicToggleButton::L4AndL5, QT_TR_NOOP("L4 + L5")},
+		{ MicToggleButton::None, QT_TR_NOOP("None")}
+	};
+	auto current_mic_toggle_button = settings->GetMicToggleButton();
+	for(const auto &p : mic_toggle_button_strings)
+	{
+		mic_toggle_button_combo_box->addItem(tr(p.second), (int)p.first);
+		if(current_mic_toggle_button == p.first)
+			mic_toggle_button_combo_box->setCurrentIndex(mic_toggle_button_combo_box->count() - 1);
+	}
+	connect(mic_toggle_button_combo_box, SIGNAL(currentIndexChanged(int)), this, SLOT(MicToggleButtonSelected()));
+	stream_page->addWidget(CreateRow(tr("Microphone Button"), tr("Controller button that turns the microphone on and off during the stream. The M key always works."), mic_toggle_button_combo_box));
+
+	mic_auto_start_toggle = new ToggleSwitch(this);
+	mic_auto_start_toggle->setChecked(settings->GetMicAutoStart());
+	connect(mic_auto_start_toggle, &QAbstractButton::toggled, this, [this](bool checked) {
+		this->settings->SetMicAutoStart(checked);
+	});
+	stream_page->addWidget(CreateRow(tr("Microphone On at Start"), tr("Turns the microphone on by itself when the stream begins."), mic_auto_start_toggle));
+
 	audio_buffer_size_edit = new QLineEdit(this);
 	audio_buffer_size_edit->setValidator(new QIntValidator(1024, 0x20000, audio_buffer_size_edit));
 	unsigned int audio_buffer_size = settings->GetAudioBufferSizeRaw();
@@ -240,6 +291,24 @@ SettingsDialog::SettingsDialog(Settings *settings, HintStyle hint_style, QWidget
 	}
 	connect(disconnect_action_combo_box, SIGNAL(currentIndexChanged(int)), this, SLOT(DisconnectActionSelected()));
 	stream_page->addWidget(CreateRow(tr("Action on Disconnect"), tr("What happens to the console when the stream is closed."), disconnect_action_combo_box));
+
+	rumble_intensity_combo_box = new QComboBox(this);
+	QList<QPair<RumbleIntensity, const char *>> rumble_intensity_strings = {
+		{ RumbleIntensity::Weak, QT_TR_NOOP("Weak")},
+		{ RumbleIntensity::Normal, QT_TR_NOOP("Normal")},
+		{ RumbleIntensity::Strong, QT_TR_NOOP("Strong")},
+		{ RumbleIntensity::VeryStrong, QT_TR_NOOP("Very Strong")},
+		{ RumbleIntensity::Maximum, QT_TR_NOOP("Maximum")}
+	};
+	auto current_rumble_intensity = settings->GetRumbleIntensity();
+	for(const auto &p : rumble_intensity_strings)
+	{
+		rumble_intensity_combo_box->addItem(tr(p.second), (int)p.first);
+		if(current_rumble_intensity == p.first)
+			rumble_intensity_combo_box->setCurrentIndex(rumble_intensity_combo_box->count() - 1);
+	}
+	connect(rumble_intensity_combo_box, SIGNAL(currentIndexChanged(int)), this, SLOT(RumbleIntensitySelected()));
+	stream_page->addWidget(CreateRow(tr("Vibration Intensity"), tr("Strength of the controller vibration. The Steam Deck needs the higher levels."), rumble_intensity_combo_box));
 
 	// Decoding
 
@@ -530,6 +599,16 @@ void SettingsDialog::ResolutionSelected()
 void SettingsDialog::DisconnectActionSelected()
 {
 	settings->SetDisconnectAction(static_cast<DisconnectAction>(disconnect_action_combo_box->currentData().toInt()));
+}
+
+void SettingsDialog::MicToggleButtonSelected()
+{
+	settings->SetMicToggleButton(static_cast<MicToggleButton>(mic_toggle_button_combo_box->currentData().toInt()));
+}
+
+void SettingsDialog::RumbleIntensitySelected()
+{
+	settings->SetRumbleIntensity(static_cast<RumbleIntensity>(rumble_intensity_combo_box->currentData().toInt()));
 }
 
 void SettingsDialog::LogVerboseChanged()

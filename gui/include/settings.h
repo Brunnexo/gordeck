@@ -35,6 +35,29 @@ enum class Decoder
 	Pi
 };
 
+// Controller button that toggles the microphone during the stream (the M key always works)
+enum class MicToggleButton
+{
+	None,
+	QuickAccess, // the "..." button of the Steam Deck (SDL misc1)
+	L4,
+	L5,
+	R4,
+	R5,
+	L4AndL5
+};
+
+// Multiplier applied to the rumble strength sent to controllers. The PS5 haptics stream
+// converted to rumble is weak by nature, and the Steam Deck's linear actuators even more so.
+enum class RumbleIntensity
+{
+	Weak,       // x0.5
+	Normal,     // x1
+	Strong,     // x2
+	VeryStrong, // x4
+	Maximum     // x8
+};
+
 class Settings : public QObject
 {
 	Q_OBJECT
@@ -64,6 +87,10 @@ class Settings : public QObject
 		bool GetFullscreenUI() const			{ return settings.value("settings/fullscreen_ui", true).toBool(); }
 		void SetFullscreenUI(bool enabled)		{ settings.setValue("settings/fullscreen_ui", enabled); }
 
+		// turn the microphone on by itself as soon as the stream is up
+		bool GetMicAutoStart() const			{ return settings.value("settings/mic_auto_start", true).toBool(); }
+		void SetMicAutoStart(bool enabled)		{ settings.setValue("settings/mic_auto_start", enabled); }
+
 		bool GetLogVerbose() const 				{ return settings.value("settings/log_verbose", false).toBool(); }
 		void SetLogVerbose(bool enabled)		{ settings.setValue("settings/log_verbose", enabled); }
 		uint32_t GetLogLevelMask();
@@ -86,6 +113,13 @@ class Settings : public QObject
 		Decoder GetDecoder() const;
 		void SetDecoder(Decoder decoder);
 
+		RumbleIntensity GetRumbleIntensity() const;
+		void SetRumbleIntensity(RumbleIntensity intensity);
+		float GetRumbleMultiplier() const;
+
+		MicToggleButton GetMicToggleButton() const;
+		void SetMicToggleButton(MicToggleButton button);
+
 		QString GetHardwareDecoder() const;
 		void SetHardwareDecoder(const QString &hw_decoder);
 
@@ -103,6 +137,8 @@ class Settings : public QObject
 		void SetAudioBufferSize(unsigned int size);
 		
 		QString GetAudioOutDevice() const;
+		QString GetAudioInDevice() const;
+		void SetAudioInDevice(QString device_name);
 		void SetAudioOutDevice(QString device_name);
 
 		ChiakiConnectVideoProfile GetVideoProfile();

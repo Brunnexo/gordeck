@@ -901,6 +901,86 @@
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
+    <message>
+        <source>Vibration Intensity</source>
+        <translation>Intensidade da vibração</translation>
+    </message>
+    <message>
+        <source>Strength of the controller vibration. The Steam Deck needs the higher levels.</source>
+        <translation>Força da vibração do controle. O Steam Deck precisa dos níveis mais altos.</translation>
+    </message>
+    <message>
+        <source>Weak</source>
+        <translation>Fraca</translation>
+    </message>
+    <message>
+        <source>Normal</source>
+        <translation>Normal</translation>
+    </message>
+    <message>
+        <source>Strong</source>
+        <translation>Forte</translation>
+    </message>
+    <message>
+        <source>Very Strong</source>
+        <translation>Muito forte</translation>
+    </message>
+    <message>
+        <source>Maximum</source>
+        <translation>Máxima</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>Microfone</translation>
+    </message>
+    <message>
+        <source>Which microphone is sent to the console.</source>
+        <translation>Qual microfone é enviado ao console.</translation>
+    </message>
+    <message>
+        <source>Microphone On at Start</source>
+        <translation>Microfone ligado ao iniciar</translation>
+    </message>
+    <message>
+        <source>Turns the microphone on by itself when the stream begins.</source>
+        <translation>Liga o microfone sozinho assim que a transmissão começa.</translation>
+    </message>
+    <message>
+        <source>Microphone Button</source>
+        <translation>Botão do microfone</translation>
+    </message>
+    <message>
+        <source>Controller button that turns the microphone on and off during the stream. The M key always works.</source>
+        <translation>Botão do controle que liga e desliga o microfone durante a transmissão. A tecla M sempre funciona.</translation>
+    </message>
+    <message>
+        <source>Quick Access (…)</source>
+        <translation>Acesso rápido (…)</translation>
+    </message>
+    <message>
+        <source>L4</source>
+        <translation>L4</translation>
+    </message>
+    <message>
+        <source>L5</source>
+        <translation>L5</translation>
+    </message>
+    <message>
+        <source>R4</source>
+        <translation>R4</translation>
+    </message>
+    <message>
+        <source>R5</source>
+        <translation>R5</translation>
+    </message>
+    <message>
+        <source>L4 + L5</source>
+        <translation>L4 + L5</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Nenhum</translation>
+    </message>
 </context>
 <context>
     <name>SettingsKeyCaptureDialog</name>
@@ -1009,6 +1089,14 @@
     <message>
         <source>Keep holding the home button to end the stream: %1 s</source>
         <translation>Continue segurando o botão home para encerrar a transmissão: %1 s</translation>
+    </message>
+    <message>
+        <source>Microphone on</source>
+        <translation>Microfone ligado</translation>
+    </message>
+    <message>
+        <source>Microphone off</source>
+        <translation>Microfone desligado</translation>
     </message>
 </context>
 </TS>

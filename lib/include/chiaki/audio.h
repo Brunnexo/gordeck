@@ -27,6 +27,7 @@ typedef struct chiaki_audio_header_t
 
 CHIAKI_EXPORT void chiaki_audio_header_load(ChiakiAudioHeader *audio_header, const uint8_t *buf);
 CHIAKI_EXPORT void chiaki_audio_header_save(ChiakiAudioHeader *audio_header, uint8_t *buf);
+CHIAKI_EXPORT void chiaki_audio_header_set(ChiakiAudioHeader *audio_header, uint8_t channels, uint8_t bits, uint32_t rate, uint32_t frame_size);
 
 static inline size_t chiaki_audio_header_frame_buf_size(ChiakiAudioHeader *audio_header)
 {

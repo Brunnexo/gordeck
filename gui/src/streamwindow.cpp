@@ -59,6 +59,7 @@ void StreamWindow::Init()
 	connect(session, &StreamSession::LoginPINRequested, this, &StreamWindow::LoginPINRequested);
 	connect(session, &StreamSession::HomeButtonHeld, this, &StreamWindow::HomeButtonHeld);
 	connect(session, &StreamSession::ForceQuitRequested, this, &StreamWindow::ForceQuit);
+	connect(session, &StreamSession::MicMutedChanged, this, &StreamWindow::MicMutedChanged);
 
 	home_hold_label = new QLabel(this);
 	home_hold_label->setAlignment(Qt::AlignCenter);
@@ -68,6 +69,16 @@ void StreamWindow::Init()
 	home_hold_update_timer = new QTimer(this);
 	home_hold_update_timer->setInterval(200);
 	connect(home_hold_update_timer, &QTimer::timeout, this, &StreamWindow::UpdateHomeHoldLabel);
+
+	mic_label = new QLabel(this);
+	mic_label->setAlignment(Qt::AlignCenter);
+	mic_label->setStyleSheet("background-color: rgba(21, 29, 48, 235); color: #ecf1fa; font-size: 15pt;"
+			"border: 2px solid #2f8cff; border-radius: 16px; padding: 14px 28px;");
+	mic_label->hide();
+	mic_label_timer = new QTimer(this);
+	mic_label_timer->setSingleShot(true);
+	mic_label_timer->setInterval(2000);
+	connect(mic_label_timer, &QTimer::timeout, mic_label, &QLabel::hide);
 
 	AVOpenGLWidget::ResolutionMode resolution_mode;
 	if(connect_info.zoom)
@@ -352,4 +363,14 @@ void StreamWindow::UpdateVideoTransform()
 		chiaki_pi_decoder_set_params(pi_decoder, r.x(), r.y(), r.width(), r.height(), isActiveWindow());
 	}
 #endif
+}
+
+void StreamWindow::MicMutedChanged(bool muted)
+{
+	mic_label->setText(muted ? tr("Microphone off") : tr("Microphone on"));
+	mic_label->adjustSize();
+	mic_label->move((width() - mic_label->width()) / 2, height() / 8);
+	mic_label->show();
+	mic_label->raise();
+	mic_label_timer->start();
 }

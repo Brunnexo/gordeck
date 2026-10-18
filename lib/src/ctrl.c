@@ -43,6 +43,9 @@ typedef enum ctrl_message_type_t {
 	CTRL_MESSAGE_TYPE_KEYBOARD_TEXT_CHANGE_REQ = 0x23,
 	CTRL_MESSAGE_TYPE_KEYBOARD_TEXT_CHANGE_RES = 0x24,
 	CTRL_MESSAGE_TYPE_KEYBOARD_CLOSE_REQ = 0x25,
+	CTRL_MESSAGE_TYPE_ENABLE_DUALSENSE_FEATURES = 0x13,
+	CTRL_MESSAGE_TYPE_MIC_CONNECT = 0x30,
+	CTRL_MESSAGE_TYPE_MIC_TOGGLE = 0x36,
 } CtrlMessageType;
 
 typedef enum ctrl_login_state_t {
@@ -486,8 +489,42 @@ static void ctrl_message_received(ChiakiCtrl *ctrl, uint16_t msg_type, uint8_t *
 	}
 }
 
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_connect_microphone(ChiakiCtrl *ctrl)
+{
+	CHIAKI_LOGV(ctrl->session->log, "Ctrl sending microphone connect message");
+	const uint8_t connect[2] = { 0x00, 0x00 };
+	ChiakiErrorCode err = ctrl_message_send(ctrl, CTRL_MESSAGE_TYPE_MIC_CONNECT, connect, sizeof(connect));
+	if(err != CHIAKI_ERR_SUCCESS)
+		CHIAKI_LOGE(ctrl->session->log, "Failed to send microphone connect message");
+	return err;
+}
+
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_set_microphone_muted(ChiakiCtrl *ctrl, bool muted)
+{
+	CHIAKI_LOGV(ctrl->session->log, "Ctrl sending microphone %s message", muted ? "mute" : "unmute");
+	uint8_t toggle[4] = { 0, 1, muted ? 1 : 0, 89 };
+	ChiakiErrorCode err = ctrl_message_send(ctrl, CTRL_MESSAGE_TYPE_MIC_TOGGLE, toggle, sizeof(toggle));
+	if(err != CHIAKI_ERR_SUCCESS)
+		CHIAKI_LOGE(ctrl->session->log, "Failed to send microphone mute message");
+	return err;
+}
+
 static void ctrl_enable_optional_features(ChiakiCtrl *ctrl)
 {
+	if(ctrl->session->connect_info.enable_dualsense)
+	{
+		// same sequence as the official app (and chiaki-ng) when a DualSense is attached
+		CHIAKI_LOGI(ctrl->session->log, "Enabling DualSense features");
+		const uint8_t enable[3] = { 0x00, 0x40, 0x00 };
+		ctrl_message_send(ctrl, CTRL_MESSAGE_TYPE_ENABLE_DUALSENSE_FEATURES, enable, 3);
+		const uint8_t connect[0x10] = { 0xa0, 0xab, 0x51, 0xbd, 0xd1, 0x7e, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00 };
+		ctrl_message_send(ctrl, 0x11, connect, 0x10);
+	}
+
+	// the microphone starts muted on the console side, like the official app does
+	chiaki_ctrl_set_microphone_muted(ctrl, true);
+	chiaki_ctrl_set_microphone_muted(ctrl, true);
+
 	if(!ctrl->session->connect_info.enable_keyboard)
 		return;
 	// TODO: Last byte of pre_enable request is random (?)

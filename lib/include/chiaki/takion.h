@@ -36,6 +36,7 @@ typedef struct chiaki_takion_av_packet_t
 	ChiakiSeqNum16 frame_index;
 	bool uses_nalu_info_structs;
 	bool is_video;
+	bool is_haptics; // audio packet carrying DualSense haptics PCM instead of Opus audio
 	ChiakiSeqNum16 unit_index;
 	uint16_t units_in_frame_total; // source + units_in_frame_fec
 	uint16_t units_in_frame_fec;
@@ -193,6 +194,12 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_crypt_advance_key_pos(ChiakiTakion *
  * Thread-safe while Takion is running.
  */
 CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_send_raw(ChiakiTakion *takion, const uint8_t *buf, size_t buf_size);
+
+/**
+ * Encrypt, sign and send a microphone audio packet built by ChiakiAudioSender.
+ * buf is modified in place (payload encrypted, key pos and GMAC filled in).
+ */
+CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_send_mic_packet(ChiakiTakion *takion, uint8_t *buf, size_t buf_size, bool ps5);
 
 /**
  * Calculate the MAC for the packet depending on the type derived from the first byte in buf,

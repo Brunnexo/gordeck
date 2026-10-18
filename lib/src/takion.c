@@ -579,6 +579,37 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_send_feedback_state(ChiakiTakion *ta
 	return takion_send_feedback_packet(takion, buf, buf_sz);
 }
 
+CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_send_mic_packet(ChiakiTakion *takion, uint8_t *buf, size_t buf_size, bool ps5)
+{
+	size_t header_size = 19 + (ps5 ? 1 : 0);
+	if(buf_size < header_size)
+		return CHIAKI_ERR_BUF_TOO_SMALL;
+	size_t payload_size = buf_size - header_size;
+
+	ChiakiErrorCode err = chiaki_mutex_lock(&takion->gkcrypt_local_mutex);
+	if(err != CHIAKI_ERR_SUCCESS)
+		return err;
+	uint64_t key_pos;
+	err = chiaki_takion_crypt_advance_key_pos(takion, payload_size + CHIAKI_GKCRYPT_BLOCK_SIZE, &key_pos);
+	if(err != CHIAKI_ERR_SUCCESS)
+		goto beach;
+
+	err = chiaki_gkcrypt_encrypt(takion->gkcrypt_local, key_pos + CHIAKI_GKCRYPT_BLOCK_SIZE, buf + header_size, payload_size);
+	if(err != CHIAKI_ERR_SUCCESS)
+		goto beach;
+
+	*((chiaki_unaligned_uint32_t *)(buf + 14)) = htonl((uint32_t)key_pos);
+
+	err = chiaki_gkcrypt_gmac(takion->gkcrypt_local, key_pos, buf, buf_size, buf + 10);
+	if(err != CHIAKI_ERR_SUCCESS)
+		goto beach;
+
+	err = chiaki_takion_send_raw(takion, buf, buf_size);
+beach:
+	chiaki_mutex_unlock(&takion->gkcrypt_local_mutex);
+	return err;
+}
+
 CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_send_feedback_history(ChiakiTakion *takion, ChiakiSeqNum16 seq_num, uint8_t *payload, size_t payload_size)
 {
 	size_t buf_size = 0xc + payload_size;
@@ -1327,6 +1358,7 @@ static ChiakiErrorCode av_packet_parse(bool v12, ChiakiTakionAVPacket *packet, C
 	if(v12 && !packet->is_video)
 	{
 		packet->byte_before_audio_data = *av;
+		packet->is_haptics = packet->byte_before_audio_data == 0x02; // DualSense haptics PCM instead of Opus
 		av += 1;
 		av_size -= 1;
 	}

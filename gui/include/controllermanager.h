@@ -100,10 +100,14 @@ class Controller : public QObject
 		ControllerLayout GetLayout();
 		ChiakiControllerState GetState();
 		void SetRumble(uint8_t left, uint8_t right);
+		void SetRumble16(uint16_t left, uint16_t right); // full 16-bit strength, for haptics-derived rumble
 		bool HasMotion()	{ return has_motion; }
+		bool IsSdlButtonPressed(int sdl_button);
 
 	signals:
 		void StateChanged();
+		// any SDL_GameControllerButton went down (also the ones not mapped to the PlayStation)
+		void SdlButtonPressed(int sdl_button);
 };
 
 #endif // CHIAKI_CONTROLLERMANAGER_H

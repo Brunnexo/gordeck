@@ -56,6 +56,8 @@ CHIAKI_EXPORT void chiaki_ctrl_fini(ChiakiCtrl *ctrl);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_send_message(ChiakiCtrl *ctrl, uint16_t type, const uint8_t *payload, size_t payload_size);
 CHIAKI_EXPORT void chiaki_ctrl_set_login_pin(ChiakiCtrl *ctrl, const uint8_t *pin, size_t pin_size);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_goto_bed(ChiakiCtrl *ctrl);
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_connect_microphone(ChiakiCtrl *ctrl);
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_set_microphone_muted(ChiakiCtrl *ctrl, bool muted);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_keyboard_set_text(ChiakiCtrl *ctrl, const char* text);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_keyboard_accept(ChiakiCtrl *ctrl);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_keyboard_reject(ChiakiCtrl *ctrl);

@@ -31,6 +31,7 @@ typedef struct chiaki_stream_connection_t
 
 	ChiakiPacketStats packet_stats;
 	ChiakiAudioReceiver *audio_receiver;
+	ChiakiAudioReceiver *haptics_receiver; // PS5 DualSense haptics stream, sequence tracked separately
 	ChiakiVideoReceiver *video_receiver;
 
 	ChiakiFeedbackSender feedback_sender;

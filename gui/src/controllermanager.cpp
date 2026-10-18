@@ -183,6 +183,8 @@ void ControllerManager::HandleEvents()
 				}
 				if(chiaki_button)
 					emit ButtonPressed(event.cbutton.which, chiaki_button);
+				if(open_controllers.contains(event.cbutton.which))
+					emit open_controllers[event.cbutton.which]->SdlButtonPressed(event.cbutton.button);
 				ControllerEvent(event.cbutton.which);
 				break;
 			}
@@ -440,11 +442,27 @@ ChiakiControllerState Controller::GetState()
 	return state;
 }
 
+bool Controller::IsSdlButtonPressed(int sdl_button)
+{
+#ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
+	if(!controller)
+		return false;
+	return SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)sdl_button) != 0;
+#else
+	return false;
+#endif
+}
+
 void Controller::SetRumble(uint8_t left, uint8_t right)
+{
+	SetRumble16((uint16_t)left << 8, (uint16_t)right << 8);
+}
+
+void Controller::SetRumble16(uint16_t left, uint16_t right)
 {
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 	if(!controller)
 		return;
-	SDL_GameControllerRumble(controller, (uint16_t)left << 8, (uint16_t)right << 8, 5000);
+	SDL_GameControllerRumble(controller, left, right, 5000);
 #endif
 }

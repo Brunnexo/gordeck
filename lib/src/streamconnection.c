@@ -53,6 +53,8 @@ static void stream_connection_takion_data_idle(ChiakiStreamConnection *stream_co
 static void stream_connection_takion_data_expect_bang(ChiakiStreamConnection *stream_connection, uint8_t *buf, size_t buf_size);
 static void stream_connection_takion_data_expect_streaminfo(ChiakiStreamConnection *stream_connection, uint8_t *buf, size_t buf_size);
 static ChiakiErrorCode stream_connection_send_streaminfo_ack(ChiakiStreamConnection *stream_connection);
+static ChiakiErrorCode stream_connection_send_controller_connection(ChiakiStreamConnection *stream_connection);
+static ChiakiErrorCode stream_connection_enable_microphone(ChiakiStreamConnection *stream_connection);
 static void stream_connection_takion_av(ChiakiStreamConnection *stream_connection, ChiakiTakionAVPacket *packet);
 static ChiakiErrorCode stream_connection_send_heartbeat(ChiakiStreamConnection *stream_connection);
 
@@ -79,6 +81,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stream_connection_init(ChiakiStreamConnecti
 
 	stream_connection->video_receiver = NULL;
 	stream_connection->audio_receiver = NULL;
+	stream_connection->haptics_receiver = NULL;
 
 	err = chiaki_mutex_init(&stream_connection->feedback_sender_mutex, false);
 	if(err != CHIAKI_ERR_SUCCESS)
@@ -164,12 +167,20 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stream_connection_run(ChiakiStreamConnectio
 		return CHIAKI_ERR_UNKNOWN;
 	}
 
+	stream_connection->haptics_receiver = chiaki_audio_receiver_new(session, NULL);
+	if(!stream_connection->haptics_receiver)
+	{
+		CHIAKI_LOGE(session->log, "StreamConnection failed to initialize Haptics Receiver");
+		err = CHIAKI_ERR_UNKNOWN;
+		goto err_audio_receiver;
+	}
+
 	stream_connection->video_receiver = chiaki_video_receiver_new(session, &stream_connection->packet_stats);
 	if(!stream_connection->video_receiver)
 	{
 		CHIAKI_LOGE(session->log, "StreamConnection failed to initialize Video Receiver");
 		err = CHIAKI_ERR_UNKNOWN;
-		goto err_audio_receiver;
+		goto err_haptics_receiver;
 	}
 
 	stream_connection->state = STATE_TAKION_CONNECT;
@@ -320,6 +331,10 @@ close_takion:
 err_video_receiver:
 	chiaki_video_receiver_free(stream_connection->video_receiver);
 	stream_connection->video_receiver = NULL;
+
+err_haptics_receiver:
+	chiaki_audio_receiver_free(stream_connection->haptics_receiver);
+	stream_connection->haptics_receiver = NULL;
 
 err_audio_receiver:
 	chiaki_audio_receiver_free(stream_connection->audio_receiver);
@@ -696,6 +711,14 @@ static void stream_connection_takion_data_expect_streaminfo(ChiakiStreamConnecti
 
 	stream_connection_send_streaminfo_ack(stream_connection);
 
+	// Tell the console which controller is attached. Without this the PS5 never sends
+	// rumble; as a DualSense it sends the haptics stream, as a DualShock 4 classic rumble.
+	if(stream_connection_send_controller_connection(stream_connection) != CHIAKI_ERR_SUCCESS)
+		CHIAKI_LOGE(stream_connection->log, "StreamConnection failed to send controller connection");
+
+	if(stream_connection_enable_microphone(stream_connection) != CHIAKI_ERR_SUCCESS)
+		CHIAKI_LOGE(stream_connection->log, "StreamConnection failed to enable microphone input");
+
 	// stream_connection->state_mutex is expected to be locked by the caller of this function
 	stream_connection->state_finished = true;
 	chiaki_cond_signal(&stream_connection->state_cond);
@@ -811,6 +834,66 @@ static ChiakiErrorCode stream_connection_send_big(ChiakiStreamConnection *stream
 	return err;
 }
 
+static ChiakiErrorCode stream_connection_send_controller_connection(ChiakiStreamConnection *stream_connection)
+{
+	ChiakiSession *session = stream_connection->session;
+	tkproto_TakionMessage msg;
+	memset(&msg, 0, sizeof(msg));
+
+	msg.type = tkproto_TakionMessage_PayloadType_CONTROLLERCONNECTION;
+	msg.has_controller_connection_payload = true;
+	msg.controller_connection_payload.has_connected = true;
+	msg.controller_connection_payload.connected = true;
+	msg.controller_connection_payload.has_controller_id = false;
+	msg.controller_connection_payload.has_controller_type = true;
+	// BOND is the DualSense's codename in the protocol
+	msg.controller_connection_payload.controller_type = session->connect_info.enable_dualsense
+		? tkproto_ControllerConnectionPayload_ControllerType_BOND
+		: tkproto_ControllerConnectionPayload_ControllerType_DUALSHOCK4;
+
+	uint8_t buf[0x20];
+	pb_ostream_t stream = pb_ostream_from_buffer(buf, sizeof(buf));
+	if(!pb_encode(&stream, tkproto_TakionMessage_fields, &msg))
+	{
+		CHIAKI_LOGE(stream_connection->log, "StreamConnection controller connection protobuf encoding failed");
+		return CHIAKI_ERR_UNKNOWN;
+	}
+
+	CHIAKI_LOGI(stream_connection->log, "StreamConnection announcing controller as %s",
+			session->connect_info.enable_dualsense ? "DualSense" : "DualShock 4");
+	return chiaki_takion_send_message_data(&stream_connection->takion, 1, 1, buf, stream.bytes_written, NULL);
+}
+
+// Announces the format of the audio we may send to the console (the microphone):
+// 16 bit, mono, 48 kHz, 10 ms Opus frames, encoded exactly like the official app does.
+static ChiakiErrorCode stream_connection_enable_microphone(ChiakiStreamConnection *stream_connection)
+{
+	tkproto_TakionMessage msg;
+	memset(&msg, 0, sizeof(msg));
+
+	ChiakiAudioHeader audio_header_input;
+	chiaki_audio_header_set(&audio_header_input, 16, 1, 48000, 480);
+	uint8_t audio_header[CHIAKI_AUDIO_HEADER_SIZE];
+	chiaki_audio_header_save(&audio_header_input, audio_header);
+	ChiakiPBBuf audio_header_buf = { sizeof(audio_header), (uint8_t *)audio_header };
+
+	msg.type = tkproto_TakionMessage_PayloadType_STREAMINFO;
+	msg.has_stream_info_payload = true;
+	msg.stream_info_payload.audio_header.arg = &audio_header_buf;
+	msg.stream_info_payload.audio_header.funcs.encode = chiaki_pb_encode_buf;
+
+	uint8_t buf[0x40];
+	pb_ostream_t stream = pb_ostream_from_buffer(buf, sizeof(buf));
+	if(!pb_encode(&stream, tkproto_TakionMessage_fields, &msg))
+	{
+		CHIAKI_LOGE(stream_connection->log, "StreamConnection microphone stream info protobuf encoding failed");
+		return CHIAKI_ERR_UNKNOWN;
+	}
+
+	CHIAKI_LOGI(stream_connection->log, "StreamConnection enabling microphone input");
+	return chiaki_takion_send_message_data(&stream_connection->takion, 1, 1, buf, stream.bytes_written, NULL);
+}
+
 static ChiakiErrorCode stream_connection_send_streaminfo_ack(ChiakiStreamConnection *stream_connection)
 {
 	tkproto_TakionMessage msg;
@@ -867,6 +950,8 @@ static void stream_connection_takion_av(ChiakiStreamConnection *stream_connectio
 
 	if(packet->is_video)
 		chiaki_video_receiver_av_packet(stream_connection->video_receiver, packet);
+	else if(packet->is_haptics)
+		chiaki_audio_receiver_av_packet(stream_connection->haptics_receiver, packet);
 	else
 		chiaki_audio_receiver_av_packet(stream_connection->audio_receiver, packet);
 }
