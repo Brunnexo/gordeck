@@ -1099,4 +1099,27 @@
         <translation>Microfone desligado</translation>
     </message>
 </context>
+<context>
+    <name>VirtualKeyboard</name>
+    <message>
+        <source>Keyboard</source>
+        <translation>Teclado</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Space</source>
+        <translation>Espaço</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Limpar</translation>
+    </message>
+</context>
 </TS>

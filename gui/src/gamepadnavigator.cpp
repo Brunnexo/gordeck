@@ -11,6 +11,7 @@
 #include <QDialogButtonBox>
 #include <QKeyEvent>
 #include <QLineEdit>
+#include <virtualkeyboard.h>
 #include <QMessageBox>
 #include <QWidget>
 
@@ -414,7 +415,9 @@ bool GamepadNavigator::DispatchToPopupOrDialog(GamepadButton button)
 			}
 			else if(auto combo = qobject_cast<QComboBox *>(focus))
 				combo->showPopup();
-			else if(focus && !qobject_cast<QLineEdit *>(focus))
+			else if(auto line_edit = qobject_cast<QLineEdit *>(focus))
+				VirtualKeyboard::Edit(line_edit);
+			else if(focus)
 				SendKey(focus, Qt::Key_Return);
 			break;
 		case GamepadButton::B:

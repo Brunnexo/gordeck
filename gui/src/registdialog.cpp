@@ -55,6 +55,7 @@ RegistDialog::RegistDialog(Settings *settings, const QString &host, QWidget *par
 	pin_edit = new QLineEdit(this);
 	pin_edit->setValidator(new QRegularExpressionValidator(pin_re, pin_edit));
 	pin_edit->setPlaceholderText("12345678");
+	pin_edit->setInputMethodHints(Qt::ImhDigitsOnly);
 	content->addWidget(ModernWidgets::CreateRow(this, tr("PIN"), tr("8 digits shown on the console."), pin_edit, control_width));
 
 	auto UpdatePSNIDEdits = [this]() {

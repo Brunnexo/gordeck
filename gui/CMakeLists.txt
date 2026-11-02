@@ -49,6 +49,8 @@ add_executable(gordeck WIN32
 		include/hintbar.h
 		src/hintbar.cpp
 		include/moderndialog.h
+		include/virtualkeyboard.h
+		src/virtualkeyboard.cpp
 		src/moderndialog.cpp
 		include/modernwidgets.h
 		src/modernwidgets.cpp

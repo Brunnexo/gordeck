@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) { return real_main(argc, argv); }
 #include <string.h>
 
 #include <QApplication>
+#include <virtualkeyboard.h>
 #include <QCommandLineParser>
 #include <QMap>
 #include <QSurfaceFormat>
@@ -234,6 +235,7 @@ int real_main(int argc, char *argv[])
 
 int RunMain(QApplication &app, Settings *settings)
 {
+	VirtualKeyboard::InstallTouchTrigger(&app);
 	MainWindow main_window(settings);
 	if(settings->GetFullscreenUI())
 		main_window.showFullScreen();
